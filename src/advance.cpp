@@ -363,7 +363,7 @@ int Advance::AdvanceIt(double tau, InitData *DATA, Field *hydro_fields,
     int n_cell_eta = 1;
     int n_cell_x = 1;
     int n_cell_y = 1;
-    int ieta;
+    int n_cell_length = (DATA->nx + 1)*(DATA->ny + 1)*(DATA->neta);
     const int cube_size=n_cell_x*n_cell_y*n_cell_eta;
     const int neigh_sizex=4*n_cell_y*n_cell_eta;
     const int neigh_sizey=4*n_cell_x*n_cell_eta;
@@ -473,9 +473,9 @@ int Advance::AdvanceIt(double tau, InitData *DATA, Field *hydro_fields,
     for (int ieta = 0; ieta < grid_neta; ieta += n_cell_eta){
         for (int ix = 0; ix <= grid_nx; ix += n_cell_x){
             for (int iy = 0; iy <= grid_ny; iy += n_cell_y){
-                 qi_array = prepare_qi_array(tau, hydro_fields, rk_flag, ieta, ix, iy, ncell_eta,
+                 qi_array = prepare_qi_array(tau, hydro_fields, rk_flag, ieta, ix, iy, n_cell_eta,
                                              n_cell_x, n_cell_y, qi_array, qi_nbr_x, qi_nbr_y,
-                                             qi_nbr_eta, qi_rk0, grid_array, DATA);
+                                             qi_nbr_eta, qi_rk0, grid_array, grid_array_temp, DATA);
                  for (int i = 0; i < cube_size; ++i){
                      for (int j = 0; j < 5; ++j){
                          if (fabs(qi_array[i][j] - qi_array_debug[ieta*grid_nx*grid_ny + ix*grid_ny + iy][i][j]) > .000001){
