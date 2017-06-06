@@ -37,12 +37,12 @@ Advance::~Advance() {
 }
 
 
-double** Advance::prepare_qi_array(
+double* Advance::prepare_qi_array(
         double tau, Field *hydro_fields, int rk_flag, int ieta, int ix, int iy,
         int n_cell_eta, int n_cell_x, int n_cell_y,
-        double **qi_array, double **qi_nbr_x,
-        double **qi_nbr_y, double **qi_nbr_eta,
-        double **qi_rk0, double **grid_array, double *grid_array_temp, InitData *DATA) {
+        double *qi_array, double *qi_nbr_x,
+        double *qi_nbr_y, double *qi_nbr_eta,
+        double *qi_rk0, double *grid_array, double *grid_array_temp, InitData *DATA) {
 
     double tau_rk;
     if (rk_flag == 0) {
@@ -64,10 +64,8 @@ double** Advance::prepare_qi_array(
                 int idx_iy = minm(iy + j, DATA->ny);
                 int idx = j + n_cell_y*i + n_cell_x*n_cell_y*k;
                 field_idx = (idx_iy + idx_ix*field_ny + idx_ieta*field_nperp);
-                update_grid_array_from_field(hydro_fields, field_idx,
-                                             grid_array[idx], rk_flag);
-                get_qmu_from_grid_array(tau_rk, qi_array[idx],
-                                        grid_array[idx]);
+                update_grid_array_from_field(hydro_fields, field_idx, grid_array, rk_flag, idx);
+                get_qmu_from_grid_array(tau_rk, qi_array, grid_array, idx);
            }
         }
     }
@@ -82,10 +80,8 @@ double** Advance::prepare_qi_array(
                     int idx = j + n_cell_y*i + n_cell_x*n_cell_y*k;
                     field_idx = (idx_iy + idx_ix*field_ny
                                  + idx_ieta*field_nperp);
-                    update_grid_array_from_field(hydro_fields, field_idx,
-                                                 grid_array_temp, 0);
-                    get_qmu_from_grid_array(tau, qi_rk0[idx],
-                                            grid_array_temp);
+                    update_grid_array_from_field(hydro_fields, field_idx, grid_array_temp, 0, 0);
+                    get_qmu_from_grid_array(tau, qi_rk0, grid_array_temp, idx);
                 }
             }
         }
@@ -105,21 +101,17 @@ double** Advance::prepare_qi_array(
             int idx_p_2 = min(ix + n_cell_x + 1, DATA->nx);
 
             field_idx = (idx_iy + idx_m_2*field_ny + idx_ieta*field_nperp);
-            update_grid_array_from_field(hydro_fields, field_idx,
-                                         grid_array_temp, rk_flag);
-            get_qmu_from_grid_array(tau_rk, qi_nbr_x[idx], grid_array_temp);
+            update_grid_array_from_field(hydro_fields, field_idx, grid_array_temp, rk_flag, 0);
+            get_qmu_from_grid_array(tau_rk, qi_nbr_x, grid_array_temp, idx);
             field_idx = (idx_iy + idx_m_1*field_ny + idx_ieta*field_nperp);
-            update_grid_array_from_field(hydro_fields, field_idx,
-                                         grid_array_temp, rk_flag);
-            get_qmu_from_grid_array(tau_rk, qi_nbr_x[idx+1], grid_array_temp);
+            update_grid_array_from_field(hydro_fields, field_idx, grid_array_temp, rk_flag, 0);
+            get_qmu_from_grid_array(tau_rk, qi_nbr_x, grid_array_temp, idx+1);
             field_idx = (idx_iy + idx_p_1*field_ny + idx_ieta*field_nperp);
-            update_grid_array_from_field(hydro_fields, field_idx,
-                                         grid_array_temp, rk_flag);
-            get_qmu_from_grid_array(tau_rk, qi_nbr_x[idx+2], grid_array_temp);
+            update_grid_array_from_field(hydro_fields, field_idx, grid_array_temp, rk_flag, 0);
+            get_qmu_from_grid_array(tau_rk, qi_nbr_x, grid_array_temp, idx+2);
             field_idx = (idx_iy + idx_p_2*field_ny + idx_ieta*field_nperp);
-            update_grid_array_from_field(hydro_fields, field_idx,
-                                         grid_array_temp, rk_flag);
-            get_qmu_from_grid_array(tau_rk, qi_nbr_x[idx+3], grid_array_temp);
+            update_grid_array_from_field(hydro_fields, field_idx, grid_array_temp, rk_flag, 0);
+            get_qmu_from_grid_array(tau_rk, qi_nbr_x, grid_array_temp, idx+3);
         }
     }
 
@@ -136,21 +128,17 @@ double** Advance::prepare_qi_array(
             int idx_p_2 = min(iy + n_cell_y + 1, DATA->ny);
 
             field_idx = (idx_m_2 + idx_ix*field_ny + idx_ieta*field_nperp);
-            update_grid_array_from_field(hydro_fields, field_idx,
-                                         grid_array_temp, rk_flag);
-            get_qmu_from_grid_array(tau_rk, qi_nbr_y[idx], grid_array_temp);
+            update_grid_array_from_field(hydro_fields, field_idx, grid_array_temp, rk_flag, 0);
+            get_qmu_from_grid_array(tau_rk, qi_nbr_y, grid_array_temp, idx);
             field_idx = (idx_m_1 + idx_ix*field_ny + idx_ieta*field_nperp);
-            update_grid_array_from_field(hydro_fields, field_idx,
-                                         grid_array_temp, rk_flag);
-            get_qmu_from_grid_array(tau_rk, qi_nbr_y[idx+1], grid_array_temp);
+            update_grid_array_from_field(hydro_fields, field_idx, grid_array_temp, rk_flag, 0);
+            get_qmu_from_grid_array(tau_rk, qi_nbr_y, grid_array_temp, idx+1);
             field_idx = (idx_p_1 + idx_ix*field_ny + idx_ieta*field_nperp);
-            update_grid_array_from_field(hydro_fields, field_idx,
-                                         grid_array_temp, rk_flag);
-            get_qmu_from_grid_array(tau_rk, qi_nbr_y[idx+2], grid_array_temp);
+            update_grid_array_from_field(hydro_fields, field_idx, grid_array_temp, rk_flag, 0);
+            get_qmu_from_grid_array(tau_rk, qi_nbr_y, grid_array_temp, idx+2);
             field_idx = (idx_p_2 + idx_ix*field_ny + idx_ieta*field_nperp);
-            update_grid_array_from_field(hydro_fields, field_idx,
-                                         grid_array_temp, rk_flag);
-            get_qmu_from_grid_array(tau_rk, qi_nbr_y[idx+3], grid_array_temp);
+            update_grid_array_from_field(hydro_fields, field_idx, grid_array_temp, rk_flag, 0);
+            get_qmu_from_grid_array(tau_rk, qi_nbr_y, grid_array_temp, idx+3);
         }
     }
 
@@ -167,21 +155,17 @@ double** Advance::prepare_qi_array(
             int idx_p_2 = min(ieta + n_cell_eta + 1, DATA->neta-1);
 
             field_idx = (idx_iy + idx_ix*field_ny + idx_m_2*field_nperp);
-            update_grid_array_from_field(hydro_fields, field_idx,
-                                         grid_array_temp, rk_flag);
-            get_qmu_from_grid_array(tau_rk, qi_nbr_eta[idx], grid_array_temp);
+            update_grid_array_from_field(hydro_fields, field_idx, grid_array_temp, rk_flag, 0);
+            get_qmu_from_grid_array(tau_rk, qi_nbr_eta, grid_array_temp, idx);
             field_idx = (idx_iy + idx_ix*field_ny + idx_m_1*field_nperp);
-            update_grid_array_from_field(hydro_fields, field_idx,
-                                         grid_array_temp, rk_flag);
-            get_qmu_from_grid_array(tau_rk, qi_nbr_eta[idx+1], grid_array_temp);
+            update_grid_array_from_field(hydro_fields, field_idx, grid_array_temp, rk_flag, 0);
+            get_qmu_from_grid_array(tau_rk, qi_nbr_eta, grid_array_temp, idx+1);
             field_idx = (idx_iy + idx_ix*field_ny + idx_p_1*field_nperp);
-            update_grid_array_from_field(hydro_fields, field_idx,
-                                         grid_array_temp, rk_flag);
-            get_qmu_from_grid_array(tau_rk, qi_nbr_eta[idx+2], grid_array_temp);
+            update_grid_array_from_field(hydro_fields, field_idx, grid_array_temp, rk_flag, 0);
+            get_qmu_from_grid_array(tau_rk, qi_nbr_eta, grid_array_temp, idx+2);
             field_idx = (idx_iy + idx_ix*field_ny + idx_p_2*field_nperp);
-            update_grid_array_from_field(hydro_fields, field_idx,
-                                         grid_array_temp, rk_flag);
-            get_qmu_from_grid_array(tau_rk, qi_nbr_eta[idx+3], grid_array_temp);
+            update_grid_array_from_field(hydro_fields, field_idx, grid_array_temp, rk_flag, 0);
+            get_qmu_from_grid_array(tau_rk, qi_nbr_eta, grid_array_temp, idx+3);
         }
     }
     
@@ -304,7 +288,7 @@ void Advance::prepare_velocity_array(double tau_rk, Field *hydro_fields,
                                      int ieta, int ix, int iy, int rk_flag,
                                      int n_cell_eta, int n_cell_x,
                                      int n_cell_y, double **velocity_array, 
-                                     double **grid_array,
+                                     double *grid_array,
                                      double **vis_array_new,
                                      double *grid_array_temp) {
     int trk_flag = 1;
@@ -325,11 +309,9 @@ void Advance::prepare_velocity_array(double tau_rk, Field *hydro_fields,
                 int idx = j + n_cell_y*i + n_cell_x*n_cell_y*k;
 
                 field_idx = (idx_iy + idx_ix*field_ny + idx_ieta*field_nperp);
-                update_grid_array_from_field(hydro_fields, field_idx,
-                                             grid_array[idx], rk_flag);
+                update_grid_array_from_field(hydro_fields, field_idx, grid_array, rk_flag, idx);
 
-                update_grid_array_from_field(hydro_fields, field_idx,
-                                             grid_array_temp, trk_flag);
+                update_grid_array_from_field(hydro_fields, field_idx, grid_array_temp, trk_flag, 0);
                 double u0 = 1./sqrt(1. - grid_array_temp[1]*grid_array_temp[1]
                                        - grid_array_temp[2]*grid_array_temp[2]
                                        - grid_array_temp[3]*grid_array_temp[3]
@@ -1051,20 +1033,19 @@ int Advance::FirstRKStepW(double tau, int rk_flag, int n_cell_eta,
 
 
 
-void Advance::update_grid_array_from_field(
-                Field *hydro_fields, int idx, double *grid_array, int rk_flag) {
+void Advance::update_grid_array_from_field( Field *hydro_fields, int idx, double *grid_array, int rk_flag, int index) {
     if (rk_flag == 0) {
-        grid_array[0] = hydro_fields->e_rk0[idx];
-        grid_array[4] = hydro_fields->rhob_rk0[idx];
+        grid_array[5*index+0] = hydro_fields->e_rk0[idx];
+        grid_array[5*index+4] = hydro_fields->rhob_rk0[idx];
         for (int i = 1; i < 4; i++) {
-            grid_array[i] = (hydro_fields->u_rk0[idx][i]
+            grid_array[5*index+i] = (hydro_fields->u_rk0[idx][i]
                              /hydro_fields->u_rk0[idx][0]);
         }
     } else {
-        grid_array[0] = hydro_fields->e_rk1[idx];
-        grid_array[4] = hydro_fields->rhob_rk1[idx];
+        grid_array[5*index+0] = hydro_fields->e_rk1[idx];
+        grid_array[5*index+4] = hydro_fields->rhob_rk1[idx];
         for (int i = 1; i < 4; i++) {
-            grid_array[i] = (hydro_fields->u_rk1[idx][i]
+            grid_array[5*index+i] = (hydro_fields->u_rk1[idx][i]
                              /hydro_fields->u_rk1[idx][0]);
         }
     }
@@ -1705,22 +1686,22 @@ double Advance::get_TJb_new(double *grid_array, int mu, int nu) {
 //! This function computes the vector [T^\tau\mu, J^\tau] from the
 //! grid_array [e, v^i, rhob]
 void Advance::get_qmu_from_grid_array(double tau, double *qi,
-                                      double *grid_array) {
-    double rhob = grid_array[4];
-    double e = grid_array[0];
+                                      double *grid_array, int index) {
+    double rhob = grid_array[index*5+4];
+    double e = grid_array[index*5+0];
     double pressure = get_pressure(e, rhob);
-    double gamma = 1./sqrt(1. - grid_array[1]*grid_array[1]
-                              - grid_array[2]*grid_array[2]
-                              - grid_array[3]*grid_array[3]);
+    double gamma = 1./sqrt(1. - grid_array[index*5+1]*grid_array[index*5+1]
+                              - grid_array[index*5+2]*grid_array[index*5+2]
+                              - grid_array[index*5+3]*grid_array[index*5+3]);
     double gamma_sq = gamma*gamma;
-    qi[0] = tau*((e + pressure)*gamma_sq - pressure);
-    qi[1] = tau*(e + pressure)*gamma_sq*grid_array[1];
-    qi[2] = tau*(e + pressure)*gamma_sq*grid_array[2];
-    qi[3] = tau*(e + pressure)*gamma_sq*grid_array[3];
-    qi[4] = tau*rhob*gamma;
+    qi[index*5+0] = tau*((e + pressure)*gamma_sq - pressure);
+    qi[index*5+1] = tau*(e + pressure)*gamma_sq*grid_array[index*5+1];
+    qi[index*5+2] = tau*(e + pressure)*gamma_sq*grid_array[index*5+2];
+    qi[index*5+3] = tau*(e + pressure)*gamma_sq*grid_array[index*5+3];
+    qi[index*5+4] = tau*rhob*gamma;
 }
 
-void Advance::update_grid_cell(double **grid_array, Field *hydro_fields, int rk_flag,
+void Advance::update_grid_cell(double *grid_array, Field *hydro_fields, int rk_flag,
                                int ieta, int ix, int iy,
                                int n_cell_eta, int n_cell_x, int n_cell_y) {
     for (int k = 0; k < n_cell_eta; k++) {
