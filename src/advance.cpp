@@ -10,6 +10,8 @@
 
 using namespace std;
 
+#define minm(x, y) ((x) > (y) ? (y) : (x))
+#define maxm(x, y) ((x) > (y) ? (x) : (y))
 Advance::Advance(EOS *eosIn, InitData *DATA_in) {
     DATA_ptr = DATA_in;
     eos = eosIn;
@@ -53,12 +55,13 @@ double** Advance::prepare_qi_array(
     int field_ny = DATA->ny + 1;
     int field_nperp = (DATA->ny + 1)*(DATA->nx + 1);
     // first build qi cube n_cell_x*n_cell_x*n_cell_eta
+    
     for (int k = 0; k < n_cell_eta; k++) {
-        int idx_ieta = min(ieta + k, DATA->neta - 1);
+        int idx_ieta = minm(ieta + k, DATA->neta - 1);
         for (int i = 0; i < n_cell_x; i++) {
-            int idx_ix = min(ix + i, DATA->nx);
+            int idx_ix = minm(ix + i, DATA->nx);
             for (int j = 0; j < n_cell_y; j++) {
-                int idx_iy = min(iy + j, DATA->ny);
+                int idx_iy = minm(iy + j, DATA->ny);
                 int idx = j + n_cell_y*i + n_cell_x*n_cell_y*k;
                 field_idx = (idx_iy + idx_ix*field_ny + idx_ieta*field_nperp);
                 update_grid_array_from_field(hydro_fields, field_idx,
@@ -181,7 +184,8 @@ double** Advance::prepare_qi_array(
             get_qmu_from_grid_array(tau_rk, qi_nbr_eta[idx+3], grid_array_temp);
         }
     }
-    delete[] grid_array_temp;
+    
+    //delete[] grid_array_temp;
     return qi_array;
 }
 
