@@ -469,11 +469,9 @@ int Advance::AdvanceIt(double tau, InitData *DATA, Field *hydro_fields,
                  qi_array = prepare_qi_array(tau, hydro_fields, rk_flag, ieta, ix, iy, n_cell_eta,
                                              n_cell_x, n_cell_y, qi_array, qi_nbr_x, qi_nbr_y,
                                              qi_nbr_eta, qi_rk0, grid_array, grid_array_temp, DATA);
-                 for (int i = 0; i < cube_size; ++i){
-                     for (int j = 0; j < 5; ++j){
-                         if (fabs(qi_array[i][j] - qi_array_debug[ieta*grid_nx*grid_ny + ix*grid_ny + iy][i][j]) > .000001){
-                             cout << "Failed" << endl;
-                         }
+                 for (int i = 0; i < cube_size * 5; ++i){
+                     if (fabs(qi_array[i] - qi_array_debug[ieta*grid_nx*grid_ny + ix*grid_ny + iy][i]) > .000001){
+                         cout << "Failed" << endl;
                      }
                  }
              }
@@ -563,11 +561,8 @@ int Advance::AdvanceIt(double tau, InitData *DATA, Field *hydro_fields,
     delete[] qimhR;
     delete[] grid_array_hL;
     delete[] grid_array_hR;
-    for (int i = 0; i < cube_size; i++) {
-	    delete[] qi_array[i];
+    for (int i = 0; i < cube_size; i++){
 	    delete[] qi_array_new[i];
-	    delete[] qi_rk0[i];
-	    delete[] grid_array[i];
 	    delete[] vis_array[i];
 	    delete[] vis_nbr_tau[i];
 	    delete[] velocity_array[i];
@@ -581,12 +576,10 @@ int Advance::AdvanceIt(double tau, InitData *DATA, Field *hydro_fields,
     delete[] vis_nbr_tau;
     delete[] velocity_array;
     delete[] vis_array_new;
-    for (int i = 0; i < neigh_sizey; i++) {
-	    delete[] qi_nbr_y[i];
+    for (int i = 0; i < neigh_sizey; i++){
 	    delete[] vis_nbr_y[i];
     }
-    for (int i = 0; i < neigh_sizex; i++) {
-	    delete[] qi_nbr_x[i];
+    for (int i = 0; i < neigh_sizex; i++){
 	    delete[] vis_nbr_x[i];
     }
     delete[] qi_nbr_x;
@@ -594,7 +587,6 @@ int Advance::AdvanceIt(double tau, InitData *DATA, Field *hydro_fields,
     delete[] vis_nbr_x;
     delete[] vis_nbr_y;
     for (int i = 0; i < neigh_sizeeta; i++) {
-	    delete[] qi_nbr_eta[i];
 	    delete[] vis_nbr_eta[i];
     }
     delete[] qi_nbr_eta;
