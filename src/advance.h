@@ -76,6 +76,7 @@ class Advance {
     
     void update_grid_array_from_grid_cell(Grid *grid_p, double *grid_array,
                                           int rk_flag);
+#pragma acc routine vector
     void update_grid_array_from_field(
                 Field *hydro_fields, int idx, double *grid_array, int rk_flag);
 
@@ -119,6 +120,7 @@ class Advance {
 
     //! This function computes the vector [T^\tau\mu, J^\tau] from the
     //! grid_array [e, v^i, rhob]
+#pragma acc routine vector
     void get_qmu_from_grid_array(double tau, double *qi, double *grid_array);
 };
 

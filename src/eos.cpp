@@ -53,9 +53,9 @@ double EOS::get_cs2(double e, double rhob) {
 //! the input local energy density [1/fm^4], rhob [1/fm^3]
 double EOS::get_pressure(double e, double rhob) {
     double f = 0.0;
-    if (whichEOS == 0) {
+    //if (whichEOS == 0) {
         f = cs2*e;
-    } //else {
+    //} //else {
         //fprintf(stderr, "EOS::get_pressure: whichEOS = %d is out of range!\n",
         //        whichEOS);
         //exit(1);

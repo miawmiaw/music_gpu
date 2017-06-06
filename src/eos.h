@@ -32,6 +32,7 @@ class EOS {
     double get_temperature(double epsilon, double rhob);
     double get_mu(double epsilon, double rhob);
     double get_muS(double epsilon, double rhob);
+#pragma acc routine vector
     double get_pressure(double epsilon, double rhob);
     double s2e_ideal_gas(double s);
     double get_s2e(double s, double rhob);
