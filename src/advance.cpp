@@ -35,30 +35,30 @@ Advance::~Advance() {
 }
 
 
-void Advance::prepare_qi_array(
+double** Advance::prepare_qi_array(
         double tau, Field *hydro_fields, int rk_flag, int ieta, int ix, int iy,
         int n_cell_eta, int n_cell_x, int n_cell_y,
         double **qi_array, double **qi_nbr_x,
         double **qi_nbr_y, double **qi_nbr_eta,
-        double **qi_rk0, double **grid_array) {
+        double **qi_rk0, double **grid_array,  InitData *DATA) {
 
     double tau_rk;
     if (rk_flag == 0) {
         tau_rk = tau;
     } else {
-        tau_rk = tau + DATA_ptr->delta_tau;
+        tau_rk = tau + DATA->delta_tau;
     }
 
     int field_idx;
-    int field_ny = DATA_ptr->ny + 1;
-    int field_nperp = (DATA_ptr->ny + 1)*(DATA_ptr->nx + 1);
+    int field_ny = DATA->ny + 1;
+    int field_nperp = (DATA->ny + 1)*(DATA->nx + 1);
     // first build qi cube n_cell_x*n_cell_x*n_cell_eta
     for (int k = 0; k < n_cell_eta; k++) {
-        int idx_ieta = min(ieta + k, DATA_ptr->neta - 1);
+        int idx_ieta = min(ieta + k, DATA->neta - 1);
         for (int i = 0; i < n_cell_x; i++) {
-            int idx_ix = min(ix + i, DATA_ptr->nx);
+            int idx_ix = min(ix + i, DATA->nx);
             for (int j = 0; j < n_cell_y; j++) {
-                int idx_iy = min(iy + j, DATA_ptr->ny);
+                int idx_iy = min(iy + j, DATA->ny);
                 int idx = j + n_cell_y*i + n_cell_x*n_cell_y*k;
                 //update_grid_array_from_grid_cell(
                 //                    &arena[idx_ieta][idx_ix][idx_iy],
@@ -68,18 +68,18 @@ void Advance::prepare_qi_array(
                                              grid_array[idx], rk_flag);
                 get_qmu_from_grid_array(tau_rk, qi_array[idx],
                                         grid_array[idx]);
-            }
+           }
         }
     }
 
     double *grid_array_temp = new double[5];
     if (rk_flag == 1) {
         for (int k = 0; k < n_cell_eta; k++) {
-            int idx_ieta = min(ieta + k, DATA_ptr->neta - 1);
+            int idx_ieta = min(ieta + k, DATA->neta - 1);
             for (int i = 0; i < n_cell_x; i++) {
-                int idx_ix = min(ix + i, DATA_ptr->nx);
+                int idx_ix = min(ix + i, DATA->nx);
                 for (int j = 0; j < n_cell_y; j++) {
-                    int idx_iy = min(iy + j, DATA_ptr->ny);
+                    int idx_iy = min(iy + j, DATA->ny);
                     int idx = j + n_cell_y*i + n_cell_x*n_cell_y*k;
                     field_idx = (idx_iy + idx_ix*field_ny
                                  + idx_ieta*field_nperp);
@@ -98,15 +98,15 @@ void Advance::prepare_qi_array(
     // now build neighbouring cells
     // x-direction
     for (int k = 0; k < n_cell_eta; k++) {
-        int idx_ieta = min(ieta + k, DATA_ptr->neta - 1);
+        int idx_ieta = min(ieta + k, DATA->neta - 1);
         for (int i = 0; i < n_cell_y; i++) {
-            int idx_iy = min(iy + i, DATA_ptr->ny);
+            int idx_iy = min(iy + i, DATA->ny);
             int idx = 4*i + 4*n_cell_y*k;
 
             int idx_m_2 = max(0, ix - 2);
             int idx_m_1 = max(0, ix - 1);
-            int idx_p_1 = min(ix + n_cell_x, DATA_ptr->nx);
-            int idx_p_2 = min(ix + n_cell_x + 1, DATA_ptr->nx);
+            int idx_p_1 = min(ix + n_cell_x, DATA->nx);
+            int idx_p_2 = min(ix + n_cell_x + 1, DATA->nx);
 
             //update_grid_array_from_grid_cell(&arena[idx_ieta][idx_m_2][idx_iy],
             //                                 grid_array_temp, rk_flag);
@@ -137,15 +137,15 @@ void Advance::prepare_qi_array(
 
     // y-direction
     for (int k = 0; k < n_cell_eta; k++) {
-        int idx_ieta = min(ieta + k, DATA_ptr->neta - 1);
+        int idx_ieta = min(ieta + k, DATA->neta - 1);
         for (int i = 0; i < n_cell_x; i++) {
-            int idx_ix = min(ix + i, DATA_ptr->nx);
+            int idx_ix = min(ix + i, DATA->nx);
             int idx = 4*i + 4*n_cell_x*k;
 
             int idx_m_2 = max(0, iy - 2);
             int idx_m_1 = max(0, iy - 1);
-            int idx_p_1 = min(iy + n_cell_y, DATA_ptr->ny);
-            int idx_p_2 = min(iy + n_cell_y + 1, DATA_ptr->ny);
+            int idx_p_1 = min(iy + n_cell_y, DATA->ny);
+            int idx_p_2 = min(iy + n_cell_y + 1, DATA->ny);
 
             //update_grid_array_from_grid_cell(&arena[idx_ieta][idx_ix][idx_m_2],
             //                                 grid_array_temp, rk_flag);
@@ -176,15 +176,15 @@ void Advance::prepare_qi_array(
 
     // eta-direction
     for (int i = 0; i < n_cell_x; i++) {
-        int idx_ix = min(ix + i, DATA_ptr->nx);
+        int idx_ix = min(ix + i, DATA->nx);
         for (int k = 0; k < n_cell_y; k++) {
-            int idx_iy = min(iy + k, DATA_ptr->ny);
+            int idx_iy = min(iy + k, DATA->ny);
             int idx = 4*k + 4*n_cell_y*i;
 
             int idx_m_2 = max(0, ieta - 2);
             int idx_m_1 = max(0, ieta - 1);
-            int idx_p_1 = min(ieta + n_cell_eta, DATA_ptr->neta-1);
-            int idx_p_2 = min(ieta + n_cell_eta + 1, DATA_ptr->neta-1);
+            int idx_p_1 = min(ieta + n_cell_eta, DATA->neta-1);
+            int idx_p_2 = min(ieta + n_cell_eta + 1, DATA->neta-1);
 
             //update_grid_array_from_grid_cell(&arena[idx_m_2][idx_ix][idx_iy],
             //                                 grid_array_temp, rk_flag);
@@ -213,6 +213,7 @@ void Advance::prepare_qi_array(
         }
     }
     delete[] grid_array_temp;
+    return qi_array;
 }
 
 void Advance::prepare_vis_array(
@@ -447,112 +448,226 @@ void Advance::prepare_velocity_array(double tau_rk, Field *hydro_fields,
 // evolve Runge-Kutta step in tau
 int Advance::AdvanceIt(double tau, InitData *DATA, Field *hydro_fields,
                        int rk_flag) {
-    int n_cell_eta = 1;
-    int n_cell_x = 1;
-    int n_cell_y = 1;
-    int ieta;
-    for (ieta = 0; ieta < grid_neta; ieta += n_cell_eta) {
-        int ix;
-        #pragma omp parallel private(ix)
-        {
-            #pragma omp for
-            for (ix = 0; ix <= grid_nx; ix += n_cell_x) {
-                double **qi_array = new double* [n_cell_x*n_cell_y*n_cell_eta];
-                double **qi_array_new = new double* [n_cell_x*n_cell_y*n_cell_eta];
-                double **qi_rk0 = new double* [n_cell_x*n_cell_y*n_cell_eta];
-                double **grid_array = (
-                                new double* [n_cell_x*n_cell_y*n_cell_eta]);
-                for (int i = 0; i < n_cell_x*n_cell_y*n_cell_eta; i++) {
-                    qi_array[i] = new double[5];
-                    qi_array_new[i] = new double[5];
-                    qi_rk0[i] = new double[5];
-                    grid_array[i] = new double[5];
-                }
-                double **qi_nbr_x = new double* [4*n_cell_y*n_cell_eta];
-                double **qi_nbr_y = new double* [4*n_cell_x*n_cell_eta];
-                for (int i = 0; i < 4*n_cell_x*n_cell_eta; i++) {
-                    qi_nbr_y[i] = new double[5];
-                }
-                for (int i = 0; i < 4*n_cell_y*n_cell_eta; i++) {
-                    qi_nbr_x[i] = new double[5];
-                }
-                double **qi_nbr_eta = new double* [4*n_cell_x*n_cell_y];
-                for (int i = 0; i < 4*n_cell_x*n_cell_y; i++) {
-                    qi_nbr_eta[i] = new double[5];
-                }
-                double **vis_array =
-                                new double* [n_cell_x*n_cell_y*n_cell_eta];
-                double **vis_array_new =
-                                new double* [n_cell_x*n_cell_y*n_cell_eta];
-                double **vis_nbr_tau =
-                                new double* [n_cell_x*n_cell_y*n_cell_eta];
-                double **velocity_array =
-                                new double* [n_cell_x*n_cell_y*n_cell_eta];
-                for (int i = 0; i < n_cell_x*n_cell_y*n_cell_eta; i++) {
-                    vis_array[i] = new double[19];
-                    vis_array_new[i] = new double[19];
-                    vis_nbr_tau[i] = new double[19];
-                    velocity_array[i] = new double[20];
-                }
-                double **vis_nbr_x = new double* [4*n_cell_y*n_cell_eta];
-                double **vis_nbr_y = new double* [4*n_cell_x*n_cell_eta];
-                for (int i = 0; i < 4*n_cell_x*n_cell_eta; i++) {
-                    vis_nbr_y[i] = new double[19];
-                }
-                for (int i = 0; i < 4*n_cell_y*n_cell_eta; i++) {
-                    vis_nbr_x[i] = new double[19];
-                }
-                double **vis_nbr_eta = new double* [4*n_cell_x*n_cell_y];
-                for (int i = 0; i < 4*n_cell_x*n_cell_y; i++) {
-                    vis_nbr_eta[i] = new double[19];
-                }
 
-                for (int iy = 0; iy <= grid_ny; iy += n_cell_y) {
-                    prepare_qi_array(tau, hydro_fields, rk_flag, ieta, ix, iy,
-                                     n_cell_eta, n_cell_x, n_cell_y, qi_array,
-                                     qi_nbr_x, qi_nbr_y, qi_nbr_eta,
-                                     qi_rk0, grid_array);
-                    // viscous source terms
-                    prepare_vis_array(hydro_fields, rk_flag, ieta, ix, iy,
-                                      n_cell_eta, n_cell_x, n_cell_y,
-                                      vis_array, vis_nbr_tau, vis_nbr_x,
-                                      vis_nbr_y, vis_nbr_eta);
-                    int check = 0;
-                    if (ix == 3 && iy == 0) check = 1;
-
-                    FirstRKStepT(tau, rk_flag, check,
-                                 qi_array, qi_nbr_x, qi_nbr_y, qi_nbr_eta,
-                                 n_cell_eta, n_cell_x, n_cell_y,
-                                 vis_array, vis_nbr_tau,
-                                 vis_nbr_x, vis_nbr_y, vis_nbr_eta,
-                                 qi_rk0, qi_array_new, grid_array);
-
-                    update_grid_cell(grid_array, hydro_fields, rk_flag, ieta, ix, iy,
-                                     n_cell_eta, n_cell_x, n_cell_y);
-
-                    if (DATA_ptr->viscosity_flag == 1) {
-                        double tau_rk = tau;
-                        if (rk_flag == 1) {
-                            tau_rk = tau + DATA_ptr->delta_tau;
+        int n_cell_eta = 1;
+        int n_cell_x = 1;
+        int n_cell_y = 1;
+        const int cube_size=n_cell_x*n_cell_y*n_cell_eta;
+        const int neigh_sizex=4*n_cell_y*n_cell_eta;
+        const int neigh_sizey=4*n_cell_x*n_cell_eta;
+        const int neigh_sizeeta=4*n_cell_x*n_cell_y;
+        double **qi_array = new double* [cube_size];
+        double **qi_array_new = new double* [cube_size];
+        double **qi_rk0 = new double* [cube_size];
+        double **grid_array = new double* [cube_size];
+        for (int i = 0; i < cube_size; i++) {
+                qi_array[i] = new double[5];
+                qi_array_new[i] = new double[5];
+                qi_rk0[i] = new double[5];
+                grid_array[i] = new double[5];
+        }
+        double **qi_nbr_x = new double* [neigh_sizex];
+        double **qi_nbr_y = new double* [neigh_sizey];
+        for (int i = 0; i < neigh_sizey; i++) {
+                qi_nbr_y[i] = new double[5];
+        }
+        for (int i = 0; i < neigh_sizex; i++) {
+                qi_nbr_x[i] = new double[5];
+        }
+        double **qi_nbr_eta = new double* [neigh_sizeeta];
+        for (int i = 0; i < neigh_sizeeta; i++) {
+                qi_nbr_eta[i] = new double[5];
+        }
+        double **vis_array = new double* [cube_size];
+        double **vis_array_new = new double* [cube_size];
+        double **vis_nbr_tau = new double* [cube_size];
+        double **velocity_array = new double* [cube_size];
+        for (int i = 0; i < cube_size; i++) {
+                vis_array[i] = new double[19];
+                vis_array_new[i] = new double[19];
+                vis_nbr_tau[i] = new double[19];
+                velocity_array[i] = new double[20];
+        }
+        double **vis_nbr_x = new double* [neigh_sizex];
+        double **vis_nbr_y = new double* [neigh_sizey];
+        for (int i = 0; i < neigh_sizey; i++) {
+                vis_nbr_y[i] = new double[19];
+        }
+        for (int i = 0; i < neigh_sizex; i++) {
+                vis_nbr_x[i] = new double[19];
+        }
+        double **vis_nbr_eta = new double* [neigh_sizeeta];
+        for (int i = 0; i < neigh_sizeeta; i++) {
+                vis_nbr_eta[i] = new double[19];
+        }
+        double ***qi_array_debug = new double** [grid_neta * grid_nx * grid_ny];
+        for (int i = 0; i < grid_neta * grid_nx * grid_ny; ++i){
+                qi_array_debug[i] = new double * [cube_size];
+                for (int j = 0; j < cube_size; ++j){
+                        qi_array_debug[i][j] = new double [5];
+                }
+        }
+#pragma acc data copyin (hydro_fields[0:1], \
+                hydro_fields->e_rk0[0:n_cell_length], \
+                hydro_fields->e_rk1[0:n_cell_length], \
+                hydro_fields->e_prev[0:n_cell_length], \
+                hydro_fields->rhob_rk0[0:n_cell_length], \
+                hydro_fields->rhob_rk1[0:n_cell_length], \
+                hydro_fields->rhob_prev[0:n_cell_length], \
+                hydro_fields->u_rk0[0:n_cell_length][0:4], \
+                hydro_fields->u_rk1[0:n_cell_length][0:4], \
+                hydro_fields->u_prev[0:n_cell_length][0:4], \
+                hydro_fields->dUsup[0:n_cell_length][0:20], \
+                hydro_fields->Wmunu_rk0[0:n_cell_length][0:14], \
+                hydro_fields->Wmunu_rk1[0:n_cell_length][0:14], \
+                hydro_fields->Wmunu_prev[0:n_cell_length][0:14], \
+                hydro_fields->pi_b_rk0[0:n_cell_length], \
+                hydro_fields->pi_b_rk1[0:n_cell_length], \
+                hydro_fields->pi_b_prev[0:n_cell_length], \
+                DATA[0:1], DATA->gmunu[0:4][0:4]) \
+                copyout(qi_array_debug[0:grid_neta*grid_nx*grid_ny][0:cube_size][0:5])
+                {
+#pragma acc parallel private(qi_array[0:cube_size][0:5], \
+                qi_nbr_x[0:neigh_sizex][0:5], \
+                qi_nbr_y[0:neigh_sizey][0:5], \
+                qi_nbr_eta[0:neigh_sizeeta][0:5], \
+                qi_rk0[0:cube_size][0:5], \
+                grid_array[0:cube_size][0:5])
+{
+#pragma acc loop
+        for (int ieta = 0; ieta < grid_neta; ieta += n_cell_eta) {
+                for (int ix = 0; ix <= grid_nx; ix += n_cell_x) {
+                        for (int iy = 0; iy <= grid_ny; iy += n_cell_y) {
+                                qi_array_debug[ieta*grid_nx*grid_ny + ix*grid_ny + iy] = prepare_qi_array(
+                                                tau, hydro_fields, rk_flag, ieta, ix, iy, n_cell_eta,
+                                                n_cell_x, n_cell_y, qi_array, qi_nbr_x, qi_nbr_y,
+                                                qi_nbr_eta, qi_rk0, grid_array, DATA);
                         }
-
-                        prepare_velocity_array(tau_rk, hydro_fields,
-                                               ieta, ix, iy,
-                                               rk_flag, n_cell_eta, n_cell_x,
-                                               n_cell_y, velocity_array,
-                                               grid_array, vis_array_new);
-
-                        FirstRKStepW(tau, rk_flag, n_cell_eta, n_cell_x,
-                                     n_cell_y, vis_array, vis_nbr_tau,
-                                     vis_nbr_x, vis_nbr_y, vis_nbr_eta,
-                                     velocity_array, grid_array,
-                                     vis_array_new);
-
-                        update_grid_cell_viscous(vis_array_new, hydro_fields, rk_flag,
-                                                 ieta, ix, iy, n_cell_eta,
-                                                 n_cell_x, n_cell_y);
-                    }
                 }
+        }
+}
+}
+for (int ieta = 0; ieta < grid_neta; ieta += n_cell_eta){
+        for (int ix = 0; ix <= grid_nx; ix += n_cell_x){
+                for (int iy = 0; iy <= grid_ny; iy += n_cell_y){
+                        qi_array = prepare_qi_array(tau, hydro_fields, rk_flag, ieta, ix, iy, ncell_eta,
+                                        n_cell_x, n_cell_y, qi_array, qi_nbr_x, qi_nbr_y,
+                                        qi_nbr_eta, qi_rk0, grid_array, DATA);
+                        for (int i = 0; i < cube_size; ++i){
+                                for (int j = 0; j < 5; ++j){
+                                        if (fabs(qi_array[i][j] - qi_array_debug[ieta*grid_nx*grid_ny + ix*grid_ny + iy][i][j]) > .000001){
+                                                cout << "Failed" << endl;
+                                        }
+                                }
+                        }
+                }
+        }
+}
+
+
+
+//    for (ieta = 0; ieta < grid_neta; ieta += n_cell_eta) {
+ //       int ix;
+ //       #pragma omp parallel private(ix)
+ //       {
+ //           #pragma omp for
+ //           for (ix = 0; ix <= grid_nx; ix += n_cell_x) {
+ //               double **qi_array = new double* [n_cell_x*n_cell_y*n_cell_eta];
+ //               double **qi_array_new = new double* [n_cell_x*n_cell_y*n_cell_eta];
+ //               double **qi_rk0 = new double* [n_cell_x*n_cell_y*n_cell_eta];
+ //               double **grid_array = (
+ //                               new double* [n_cell_x*n_cell_y*n_cell_eta]);
+ //               for (int i = 0; i < n_cell_x*n_cell_y*n_cell_eta; i++) {
+ //                   qi_array[i] = new double[5];
+ //                   qi_array_new[i] = new double[5];
+ //                   qi_rk0[i] = new double[5];
+ //                   grid_array[i] = new double[5];
+ //               }
+ //               double **qi_nbr_x = new double* [4*n_cell_y*n_cell_eta];
+ //               double **qi_nbr_y = new double* [4*n_cell_x*n_cell_eta];
+ //               for (int i = 0; i < 4*n_cell_x*n_cell_eta; i++) {
+ //                   qi_nbr_y[i] = new double[5];
+ //               }
+ //               for (int i = 0; i < 4*n_cell_y*n_cell_eta; i++) {
+ //                   qi_nbr_x[i] = new double[5];
+ //               }
+ //               double **qi_nbr_eta = new double* [4*n_cell_x*n_cell_y];
+ //               for (int i = 0; i < 4*n_cell_x*n_cell_y; i++) {
+ //                   qi_nbr_eta[i] = new double[5];
+ //               }
+ //               double **vis_array =
+ //                               new double* [n_cell_x*n_cell_y*n_cell_eta];
+ //               double **vis_array_new =
+ //                               new double* [n_cell_x*n_cell_y*n_cell_eta];
+ //               double **vis_nbr_tau =
+ //                               new double* [n_cell_x*n_cell_y*n_cell_eta];
+ //               double **velocity_array =
+ //                               new double* [n_cell_x*n_cell_y*n_cell_eta];
+ //               for (int i = 0; i < n_cell_x*n_cell_y*n_cell_eta; i++) {
+ //                   vis_array[i] = new double[19];
+ //                   vis_array_new[i] = new double[19];
+ //                   vis_nbr_tau[i] = new double[19];
+ //                   velocity_array[i] = new double[20];
+ //               }
+ //               double **vis_nbr_x = new double* [4*n_cell_y*n_cell_eta];
+ //               double **vis_nbr_y = new double* [4*n_cell_x*n_cell_eta];
+ //               for (int i = 0; i < 4*n_cell_x*n_cell_eta; i++) {
+ //                   vis_nbr_y[i] = new double[19];
+ //               }
+ //               for (int i = 0; i < 4*n_cell_y*n_cell_eta; i++) {
+ //                   vis_nbr_x[i] = new double[19];
+ //               }
+ //               double **vis_nbr_eta = new double* [4*n_cell_x*n_cell_y];
+ //               for (int i = 0; i < 4*n_cell_x*n_cell_y; i++) {
+ //                   vis_nbr_eta[i] = new double[19];
+ //               }
+
+ //               for (int iy = 0; iy <= grid_ny; iy += n_cell_y) {
+ //                   prepare_qi_array(tau, hydro_fields, rk_flag, ieta, ix, iy,
+ //                                    n_cell_eta, n_cell_x, n_cell_y, qi_array,
+ //                                    qi_nbr_x, qi_nbr_y, qi_nbr_eta,
+ //                                    qi_rk0, grid_array);
+ //                   // viscous source terms
+ //                   prepare_vis_array(hydro_fields, rk_flag, ieta, ix, iy,
+ //                                     n_cell_eta, n_cell_x, n_cell_y,
+ //                                     vis_array, vis_nbr_tau, vis_nbr_x,
+ //                                     vis_nbr_y, vis_nbr_eta);
+ //                   int check = 0;
+ //                   if (ix == 3 && iy == 0) check = 1;
+
+ //                   FirstRKStepT(tau, rk_flag, check,
+ //                                qi_array, qi_nbr_x, qi_nbr_y, qi_nbr_eta,
+ //                                n_cell_eta, n_cell_x, n_cell_y,
+ //                                vis_array, vis_nbr_tau,
+ //                                vis_nbr_x, vis_nbr_y, vis_nbr_eta,
+ //                                qi_rk0, qi_array_new, grid_array);
+
+ //                   update_grid_cell(grid_array, hydro_fields, rk_flag, ieta, ix, iy,
+ //                                    n_cell_eta, n_cell_x, n_cell_y);
+
+ //                   if (DATA_ptr->viscosity_flag == 1) {
+ //                       double tau_rk = tau;
+ //                       if (rk_flag == 1) {
+ //                           tau_rk = tau + DATA_ptr->delta_tau;
+ //                       }
+
+ //                       prepare_velocity_array(tau_rk, hydro_fields,
+ //                                              ieta, ix, iy,
+ //                                              rk_flag, n_cell_eta, n_cell_x,
+ //                                              n_cell_y, velocity_array,
+ //                                              grid_array, vis_array_new);
+
+ //                       FirstRKStepW(tau, rk_flag, n_cell_eta, n_cell_x,
+ //                                    n_cell_y, vis_array, vis_nbr_tau,
+ //                                    vis_nbr_x, vis_nbr_y, vis_nbr_eta,
+ //                                    velocity_array, grid_array,
+ //                                    vis_array_new);
+
+ //                       update_grid_cell_viscous(vis_array_new, hydro_fields, rk_flag,
+ //                                                ieta, ix, iy, n_cell_eta,
+ //                                                n_cell_x, n_cell_y);
+ //                   }
+ //               }
 
                 //clean up
                 for (int i = 0; i < n_cell_x*n_cell_y*n_cell_eta; i++) {

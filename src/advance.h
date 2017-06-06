@@ -35,11 +35,11 @@ class Advance {
 
     int AdvanceIt(double tau_init, InitData *DATA, Field *hydro_fields, int rk_flag);
 
-    void prepare_qi_array(
+    double ** prepare_qi_array(
         double tau, Field *hydro_fields, int rk_flag, int ieta, int ix, int iy,
         int n_cell_eta, int n_cell_x, int n_cell_y, double **qi_array,
         double **qi_nbr_x, double **qi_nbr_y, double **qi_nbr_eta,
-        double **qi_rk0, double **grid_array);
+        double **qi_rk0, double **grid_array, InitData *DATA);
 
     void prepare_vis_array(
         Field *hydro_fields, int rk_flag, int ieta, int ix, int iy,
