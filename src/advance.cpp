@@ -422,8 +422,8 @@ int Advance::AdvanceIt(double tau, InitData *DATA, Field *hydro_fields,
     double *grid_array_hL = new double[5];
     double *grid_array_hR = new double[5];
 
-    double ***qi_array_debug = new double** [grid_neta * grid_nx * gridny];
-    for (int i = 0; i < grid_neta * grid_nx * gridny; ++i){
+    double ***qi_array_debug = new double** [grid_neta * grid_nx * grid_ny];
+    for (int i = 0; i < grid_neta * grid_nx * grid_ny; ++i){
         qi_array_debug[i] = new double * [cube_size];
         for (int j = 0; j < cube_size; ++j){
             qi_array_debug[i][j] = new double [5];
@@ -454,7 +454,8 @@ int Advance::AdvanceIt(double tau, InitData *DATA, Field *hydro_fields,
                                      qi_nbr_y[0:neigh_sizey][0:5], \
                                      qi_nbr_eta[0:neigh_sizeeta][0:5], \
                                      qi_rk0[0:cube_size][0:5], \
-                                     grid_array[0:cube_size][0:5])
+                                     grid_array[0:cube_size][0:5], \
+                                     grid_array_temp[0:5])
         {
             #pragma acc loop
             for (int ieta = 0; ieta < grid_neta; ieta += n_cell_eta) {
@@ -463,7 +464,7 @@ int Advance::AdvanceIt(double tau, InitData *DATA, Field *hydro_fields,
                         qi_array_debug[ieta*grid_nx*grid_ny + ix*grid_ny + iy] = prepare_qi_array(
                                          tau, hydro_fields, rk_flag, ieta, ix, iy, n_cell_eta,
                                          n_cell_x, n_cell_y, qi_array, qi_nbr_x, qi_nbr_y,
-                                         qi_nbr_eta, qi_rk0, grid_array, DATA);
+                                         qi_nbr_eta, qi_rk0, grid_array, grid_array_temp, DATA);
                     }
                 }
             }
