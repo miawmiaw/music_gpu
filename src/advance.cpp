@@ -354,29 +354,18 @@ int Advance::AdvanceIt(double tau, InitData *DATA, Field *hydro_fields,
     const int neigh_sizex=4*n_cell_y*n_cell_eta;
     const int neigh_sizey=4*n_cell_x*n_cell_eta;
     const int neigh_sizeeta=4*n_cell_x*n_cell_y;
-    double **qi_array = new double* [cube_size];
+    double *qi_array = new double[5*cube_size];
     double **qi_array_new = new double* [cube_size];
-    double **qi_rk0 = new double* [cube_size];
+    double *qi_rk0 = new double[5*cube_size];
     double **grid_array = (
 		    new double* [cube_size]);
-    for (int i = 0; i < cube_size; i++) {
-	    qi_array[i] = new double[5];
+    for (int i = 0; i < cube_size; i++){
 	    qi_array_new[i] = new double[5];
-	    qi_rk0[i] = new double[5];
 	    grid_array[i] = new double[5];
     }
-    double **qi_nbr_x = new double* [neigh_sizex];
-    double **qi_nbr_y = new double* [neigh_sizey];
-    for (int i = 0; i < neigh_sizey; i++) {
-	    qi_nbr_y[i] = new double[5];
-    }
-    for (int i = 0; i < neigh_sizex; i++) {
-	    qi_nbr_x[i] = new double[5];
-    }
-    double **qi_nbr_eta = new double* [neigh_sizeeta];
-    for (int i = 0; i < neigh_sizeeta; i++) {
-	    qi_nbr_eta[i] = new double[5];
-    }
+    double *qi_nbr_x = new double[5*neigh_sizex];
+    double *qi_nbr_y = new double[5*neigh_sizey];
+    double *qi_nbr_eta = new double[5*neigh_sizeeta];
     double **vis_array = new double* [cube_size];
     double **vis_array_new = new double* [cube_size];
     double **vis_nbr_tau = new double* [cube_size];
@@ -435,12 +424,12 @@ int Advance::AdvanceIt(double tau, InitData *DATA, Field *hydro_fields,
                          DATA[0:1], DATA->gmunu[0:4][0:4]) \
                          copyout(qi_array_debug[0:grid_neta*grid_nx*grid_ny][0:cube_size][0:5])
     {
-        #pragma acc parallel private(qi_array[0:cube_size][0:5], \
-                                     qi_nbr_x[0:neigh_sizex][0:5], \
-                                     qi_nbr_y[0:neigh_sizey][0:5], \
-                                     qi_nbr_eta[0:neigh_sizeeta][0:5], \
-                                     qi_rk0[0:cube_size][0:5], \
-                                     grid_array[0:cube_size][0:5], \
+        #pragma acc parallel private(qi_array[0:cube_size*5], \
+                                     qi_nbr_x[0:neigh_sizex*5], \
+                                     qi_nbr_y[0:neigh_sizey*5], \
+                                     qi_nbr_eta[0:neigh_sizeeta*5], \
+                                     qi_rk0[0:cube_size*5], \
+                                     grid_array[0:cube_size*5], \
                                      grid_array_temp[0:5])
         {
             #pragma acc loop
@@ -462,11 +451,9 @@ int Advance::AdvanceIt(double tau, InitData *DATA, Field *hydro_fields,
                  qi_array = prepare_qi_array(tau, hydro_fields, rk_flag, ieta, ix, iy, n_cell_eta,
                                              n_cell_x, n_cell_y, qi_array, qi_nbr_x, qi_nbr_y,
                                              qi_nbr_eta, qi_rk0, grid_array, grid_array_temp, DATA);
-                 for (int i = 0; i < cube_size; ++i){
-                     for (int j = 0; j < 5; ++j){
-                         if (fabs(qi_array[i][j] - qi_array_debug[ieta*grid_nx*grid_ny + ix*grid_ny + iy][i][j]) > .000001){
-                             cout << "Failed" << endl;
-                         }
+                 for (int i = 0; i < cube_size * 5; ++i){
+                     if (fabs(qi_array[i] - qi_array_debug[ieta*grid_nx*grid_ny + ix*grid_ny + iy][i]) > .000001){
+                         cout << "Failed" << endl;
                      }
                  }
              }
@@ -556,11 +543,8 @@ int Advance::AdvanceIt(double tau, InitData *DATA, Field *hydro_fields,
     delete[] qimhR;
     delete[] grid_array_hL;
     delete[] grid_array_hR;
-    for (int i = 0; i < cube_size; i++) {
-	    delete[] qi_array[i];
+    for (int i = 0; i < cube_size; i++){
 	    delete[] qi_array_new[i];
-	    delete[] qi_rk0[i];
-	    delete[] grid_array[i];
 	    delete[] vis_array[i];
 	    delete[] vis_nbr_tau[i];
 	    delete[] velocity_array[i];
@@ -574,12 +558,10 @@ int Advance::AdvanceIt(double tau, InitData *DATA, Field *hydro_fields,
     delete[] vis_nbr_tau;
     delete[] velocity_array;
     delete[] vis_array_new;
-    for (int i = 0; i < neigh_sizey; i++) {
-	    delete[] qi_nbr_y[i];
+    for (int i = 0; i < neigh_sizey; i++){
 	    delete[] vis_nbr_y[i];
     }
-    for (int i = 0; i < neigh_sizex; i++) {
-	    delete[] qi_nbr_x[i];
+    for (int i = 0; i < neigh_sizex; i++){
 	    delete[] vis_nbr_x[i];
     }
     delete[] qi_nbr_x;
@@ -587,7 +569,6 @@ int Advance::AdvanceIt(double tau, InitData *DATA, Field *hydro_fields,
     delete[] vis_nbr_x;
     delete[] vis_nbr_y;
     for (int i = 0; i < neigh_sizeeta; i++) {
-	    delete[] qi_nbr_eta[i];
 	    delete[] vis_nbr_eta[i];
     }
     delete[] qi_nbr_eta;
