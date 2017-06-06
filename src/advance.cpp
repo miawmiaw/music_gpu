@@ -35,47 +35,47 @@ Advance::~Advance() {
 }
 
 
-void Advance::prepare_qi_array(
+double** Advance::prepare_qi_array(
         double tau, Field *hydro_fields, int rk_flag, int ieta, int ix, int iy,
         int n_cell_eta, int n_cell_x, int n_cell_y,
         double **qi_array, double **qi_nbr_x,
         double **qi_nbr_y, double **qi_nbr_eta,
-        double **qi_rk0, double **grid_array, double *grid_array_temp) {
+        double **qi_rk0, double **grid_array, double *grid_array_temp, InitData *DATA) {
 
     double tau_rk;
     if (rk_flag == 0) {
         tau_rk = tau;
     } else {
-        tau_rk = tau + DATA_ptr->delta_tau;
+        tau_rk = tau + DATA->delta_tau;
     }
 
     int field_idx;
-    int field_ny = DATA_ptr->ny + 1;
-    int field_nperp = (DATA_ptr->ny + 1)*(DATA_ptr->nx + 1);
+    int field_ny = DATA->ny + 1;
+    int field_nperp = (DATA->ny + 1)*(DATA->nx + 1);
     // first build qi cube n_cell_x*n_cell_x*n_cell_eta
     for (int k = 0; k < n_cell_eta; k++) {
-        int idx_ieta = min(ieta + k, DATA_ptr->neta - 1);
+        int idx_ieta = min(ieta + k, DATA->neta - 1);
         for (int i = 0; i < n_cell_x; i++) {
-            int idx_ix = min(ix + i, DATA_ptr->nx);
+            int idx_ix = min(ix + i, DATA->nx);
             for (int j = 0; j < n_cell_y; j++) {
-                int idx_iy = min(iy + j, DATA_ptr->ny);
+                int idx_iy = min(iy + j, DATA->ny);
                 int idx = j + n_cell_y*i + n_cell_x*n_cell_y*k;
                 field_idx = (idx_iy + idx_ix*field_ny + idx_ieta*field_nperp);
                 update_grid_array_from_field(hydro_fields, field_idx,
                                              grid_array[idx], rk_flag);
                 get_qmu_from_grid_array(tau_rk, qi_array[idx],
                                         grid_array[idx]);
-            }
+           }
         }
     }
 
     if (rk_flag == 1) {
         for (int k = 0; k < n_cell_eta; k++) {
-            int idx_ieta = min(ieta + k, DATA_ptr->neta - 1);
+            int idx_ieta = min(ieta + k, DATA->neta - 1);
             for (int i = 0; i < n_cell_x; i++) {
-                int idx_ix = min(ix + i, DATA_ptr->nx);
+                int idx_ix = min(ix + i, DATA->nx);
                 for (int j = 0; j < n_cell_y; j++) {
-                    int idx_iy = min(iy + j, DATA_ptr->ny);
+                    int idx_iy = min(iy + j, DATA->ny);
                     int idx = j + n_cell_y*i + n_cell_x*n_cell_y*k;
                     field_idx = (idx_iy + idx_ix*field_ny
                                  + idx_ieta*field_nperp);
@@ -91,15 +91,15 @@ void Advance::prepare_qi_array(
     // now build neighbouring cells
     // x-direction
     for (int k = 0; k < n_cell_eta; k++) {
-        int idx_ieta = min(ieta + k, DATA_ptr->neta - 1);
+        int idx_ieta = min(ieta + k, DATA->neta - 1);
         for (int i = 0; i < n_cell_y; i++) {
-            int idx_iy = min(iy + i, DATA_ptr->ny);
+            int idx_iy = min(iy + i, DATA->ny);
             int idx = 4*i + 4*n_cell_y*k;
 
             int idx_m_2 = max(0, ix - 2);
             int idx_m_1 = max(0, ix - 1);
-            int idx_p_1 = min(ix + n_cell_x, DATA_ptr->nx);
-            int idx_p_2 = min(ix + n_cell_x + 1, DATA_ptr->nx);
+            int idx_p_1 = min(ix + n_cell_x, DATA->nx);
+            int idx_p_2 = min(ix + n_cell_x + 1, DATA->nx);
 
             field_idx = (idx_iy + idx_m_2*field_ny + idx_ieta*field_nperp);
             update_grid_array_from_field(hydro_fields, field_idx,
@@ -122,15 +122,15 @@ void Advance::prepare_qi_array(
 
     // y-direction
     for (int k = 0; k < n_cell_eta; k++) {
-        int idx_ieta = min(ieta + k, DATA_ptr->neta - 1);
+        int idx_ieta = min(ieta + k, DATA->neta - 1);
         for (int i = 0; i < n_cell_x; i++) {
-            int idx_ix = min(ix + i, DATA_ptr->nx);
+            int idx_ix = min(ix + i, DATA->nx);
             int idx = 4*i + 4*n_cell_x*k;
 
             int idx_m_2 = max(0, iy - 2);
             int idx_m_1 = max(0, iy - 1);
-            int idx_p_1 = min(iy + n_cell_y, DATA_ptr->ny);
-            int idx_p_2 = min(iy + n_cell_y + 1, DATA_ptr->ny);
+            int idx_p_1 = min(iy + n_cell_y, DATA->ny);
+            int idx_p_2 = min(iy + n_cell_y + 1, DATA->ny);
 
             field_idx = (idx_m_2 + idx_ix*field_ny + idx_ieta*field_nperp);
             update_grid_array_from_field(hydro_fields, field_idx,
@@ -153,15 +153,15 @@ void Advance::prepare_qi_array(
 
     // eta-direction
     for (int i = 0; i < n_cell_x; i++) {
-        int idx_ix = min(ix + i, DATA_ptr->nx);
+        int idx_ix = min(ix + i, DATA->nx);
         for (int k = 0; k < n_cell_y; k++) {
-            int idx_iy = min(iy + k, DATA_ptr->ny);
+            int idx_iy = min(iy + k, DATA->ny);
             int idx = 4*k + 4*n_cell_y*i;
 
             int idx_m_2 = max(0, ieta - 2);
             int idx_m_1 = max(0, ieta - 1);
-            int idx_p_1 = min(ieta + n_cell_eta, DATA_ptr->neta-1);
-            int idx_p_2 = min(ieta + n_cell_eta + 1, DATA_ptr->neta-1);
+            int idx_p_1 = min(ieta + n_cell_eta, DATA->neta-1);
+            int idx_p_2 = min(ieta + n_cell_eta + 1, DATA->neta-1);
 
             field_idx = (idx_iy + idx_ix*field_ny + idx_m_2*field_nperp);
             update_grid_array_from_field(hydro_fields, field_idx,
@@ -181,6 +181,8 @@ void Advance::prepare_qi_array(
             get_qmu_from_grid_array(tau_rk, qi_nbr_eta[idx+3], grid_array_temp);
         }
     }
+    delete[] grid_array_temp;
+    return qi_array;
 }
 
 void Advance::prepare_vis_array(
