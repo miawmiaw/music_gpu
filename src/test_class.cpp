@@ -19,17 +19,34 @@ void test::initialize_hydro_fields(Field *hydro_fields) {
     int n_cell = 201*201*1;
     hydro_fields->e_rk0 = new double[n_cell];
     hydro_fields->e_rk1 = new double[n_cell];
+    hydro_fields->e_prev = new double[n_cell];
     hydro_fields->rhob_rk0 = new double[n_cell];
     hydro_fields->rhob_rk1 = new double[n_cell];
+    hydro_fields->rhob_prev = new double[n_cell];
     hydro_fields->u_rk0 = new double* [n_cell];
     hydro_fields->u_rk1 = new double* [n_cell];
+    hydro_fields->u_prev = new double* [n_cell];
+    hydro_fields->dUsup = new double* [n_cell];
+    hydro_fields->Wmunu_rk0 = new double* [n_cell];
+    hydro_fields->Wmunu_rk1 = new double* [n_cell];
+    hydro_fields->Wmunu_prev = new double* [n_cell];
+    hydro_fields->pi_b_rk0 = new double [n_cell];
+    hydro_fields->pi_b_rk1 = new double [n_cell];
+    hydro_fields->pi_b_prev = new double [n_cell];
     for (int i = 0; i < n_cell; i++) {
         hydro_fields->e_rk0[i] = 1.0;
         hydro_fields->e_rk1[i] = 1.0;
+        hydro_fields->e_prev[i] = 1.0;
         hydro_fields->rhob_rk0[i] = 1.0;
         hydro_fields->rhob_rk1[i] = 1.0;
+        hydro_fields->rhob_prev[i] = 1.0;
         hydro_fields->u_rk0[i] = new double[4];
         hydro_fields->u_rk1[i] = new double[4];
+        hydro_fields->u_prev[i] = new double[4];
+        hydro_fields->dUsup[i] = new double [20];
+        hydro_fields->Wmunu_rk0[i] = new double[4];
+        hydro_fields->Wmunu_rk1[i] = new double[4];
+        hydro_fields->Wmunu_prev[i] = new double[4];
     }
 }
 
@@ -40,10 +57,21 @@ int test::run() {
 #pragma acc data copyin (hydro_fields[0:1], \
                          hydro_fields->e_rk0[0:n_cell_length], \
                          hydro_fields->e_rk1[0:n_cell_length], \
+                         hydro_fields->e_prev[0:n_cell_length], \
                          hydro_fields->rhob_rk0[0:n_cell_length], \
                          hydro_fields->rhob_rk1[0:n_cell_length], \
+                         hydro_fields->rhob_prev[0:n_cell_length], \
                          hydro_fields->u_rk0[0:n_cell_length][0:4], \
-                         hydro_fields->u_rk1[0:n_cell_length][0:4])
+                         hydro_fields->u_rk1[0:n_cell_length][0:4], \
+                         hydro_fields->u_prev[0:n_cell_length][0:4], \
+                         hydro_fields->dUsup[0:n_cell_length][0:20], \
+                         hydro_fields->Wmunu_rk0[0:n_cell_length][0:14], \
+                         hydro_fields->Wmunu_rk1[0:n_cell_length][0:14], \
+                         hydro_fields->Wmunu_prev[0:n_cell_length][0:14], \
+                         hydro_fields->pi_b_rk0[0:n_cell_length], \
+                         hydro_fields->pi_b_rk1[0:n_cell_length], \
+                         hydro_fields->pi_b_prev[0:n_cell_length], \
+                         )
 {
     int n_cell_eta = 1;
     int n_cell_x = 1;
