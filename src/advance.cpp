@@ -366,6 +366,7 @@ int Advance::AdvanceIt(double tau, InitData *DATA, Field *hydro_fields,
     const int neigh_sizex=4*n_cell_y*n_cell_eta;
     const int neigh_sizey=4*n_cell_x*n_cell_eta;
     const int neigh_sizeeta=4*n_cell_x*n_cell_y;
+    /*
     double grid_array[1][5], qi_array[1][5], qi_array_new[1][5], qi_rk0[1][5];
     double qi_nbr_x[4][5], qi_nbr_y[4][5], qi_nbr_eta[4][5];
     double vis_array[1][19], vis_array_new[1][19], vis_nbr_tau[1][19];
@@ -379,7 +380,7 @@ int Advance::AdvanceIt(double tau, InitData *DATA, Field *hydro_fields,
     double *qimhR = new double[5];
     double *grid_array_hL = new double[5];
     double *grid_array_hR = new double[5];
-    
+    */
     
     int spacial_index_total = grid_neta * (grid_nx + 1) * (grid_ny + 1);
     double*** qi_array = new double**[spacial_index_total];
@@ -476,60 +477,49 @@ int Advance::AdvanceIt(double tau, InitData *DATA, Field *hydro_fields,
                            grid_array_hL[0:spacial_index_total][0:5], \
                            grid_array_hR[0:spacial_index_total][0:5])
     for (int ieta = 0; ieta < grid_neta; ieta += n_cell_eta) {
-//        #pragma omp parallel private(ix)
-//        {
-//            #pragma omp for
-            for (int ix = 0; ix <= grid_nx; ix += n_cell_x) {
-                for (int iy = 0; iy <= grid_ny; iy += n_cell_y) {
-                    prepare_qi_array(tau, hydro_fields, rk_flag, ieta, ix, iy,
-                                     n_cell_eta, n_cell_x, n_cell_y, qi_array,
-                                     qi_nbr_x, qi_nbr_y, qi_nbr_eta,
-                                     qi_rk0, grid_array, grid_array_temp);
-                    // viscous source terms
-                    prepare_vis_array(hydro_fields, rk_flag, ieta, ix, iy,
-                                      n_cell_eta, n_cell_x, n_cell_y,
-                                      vis_array, vis_nbr_tau, vis_nbr_x,
-                                      vis_nbr_y, vis_nbr_eta, DATA);
-
-                   FirstRKStepT(tau, rk_flag,
-                                qi_array, qi_nbr_x, qi_nbr_y, qi_nbr_eta,
-                                n_cell_eta, n_cell_x, n_cell_y,
-                                vis_array, vis_nbr_tau,
-                                vis_nbr_x, vis_nbr_y, vis_nbr_eta,
-                                qi_rk0, qi_array_new, grid_array,
-                                rhs, qiphL, qiphR, qimhL, qimhR,
-                                grid_array_hL, grid_array_hR, DATA);
-
-                    update_grid_cell(grid_array, hydro_fields, rk_flag, ieta, ix, iy,
-                                     n_cell_eta, n_cell_x, n_cell_y);
-
-                    if (DATA_ptr->viscosity_flag == 1) {
-                        double tau_rk = tau;
-                        if (rk_flag == 1) {
-                            tau_rk = tau + DATA_ptr->delta_tau;
-                        }
-
-                        prepare_velocity_array(tau_rk, hydro_fields,
-                                               ieta, ix, iy,
-                                               rk_flag, n_cell_eta, n_cell_x,
-                                               n_cell_y, velocity_array,
-                                               grid_array, vis_array_new,
-                                               grid_array_temp);
-
-                        FirstRKStepW(tau, rk_flag, n_cell_eta, n_cell_x,
-                                     n_cell_y, vis_array, vis_nbr_tau,
-                                     vis_nbr_x, vis_nbr_y, vis_nbr_eta,
-                                     velocity_array, grid_array,
-                                     vis_array_new);
-
-                        update_grid_cell_viscous(vis_array_new, hydro_fields, rk_flag,
-                                                 ieta, ix, iy, n_cell_eta,
-                                                 n_cell_x, n_cell_y);
+        for (int ix = 0; ix <= grid_nx; ix += n_cell_x) {
+            for (int iy = 0; iy <= grid_ny; iy += n_cell_y) {
+                prepare_qi_array(tau, hydro_fields, rk_flag, ieta, ix, iy,
+                                 n_cell_eta, n_cell_x, n_cell_y, qi_array,
+                                 qi_nbr_x, qi_nbr_y, qi_nbr_eta,
+                                 qi_rk0, grid_array, grid_array_temp);
+                // viscous source terms
+                prepare_vis_array(hydro_fields, rk_flag, ieta, ix, iy,
+                                  n_cell_eta, n_cell_x, n_cell_y,
+                                  vis_array, vis_nbr_tau, vis_nbr_x,
+                                  vis_nbr_y, vis_nbr_eta, DATA);
+                FirstRKStepT(tau, rk_flag,
+                            qi_array, qi_nbr_x, qi_nbr_y, qi_nbr_eta,
+                            n_cell_eta, n_cell_x, n_cell_y,
+                            vis_array, vis_nbr_tau,
+                            vis_nbr_x, vis_nbr_y, vis_nbr_eta,
+                            qi_rk0, qi_array_new, grid_array,
+                            rhs, qiphL, qiphR, qimhL, qimhR,
+                            grid_array_hL, grid_array_hR, DATA);
+                update_grid_cell(grid_array, hydro_fields, rk_flag, ieta, ix, iy,
+                                 n_cell_eta, n_cell_x, n_cell_y);
+                if (DATA_ptr->viscosity_flag == 1) {
+                    double tau_rk = tau;
+                    if (rk_flag == 1) {
+                        tau_rk = tau + DATA_ptr->delta_tau;
                     }
+                    prepare_velocity_array(tau_rk, hydro_fields,
+                                           ieta, ix, iy,
+                                           rk_flag, n_cell_eta, n_cell_x,
+                                           n_cell_y, velocity_array,
+                                           grid_array, vis_array_new,
+                                           grid_array_temp);
+                    FirstRKStepW(tau, rk_flag, n_cell_eta, n_cell_x,
+                                 n_cell_y, vis_array, vis_nbr_tau,
+                                 vis_nbr_x, vis_nbr_y, vis_nbr_eta,
+                                 velocity_array, grid_array,
+                                 vis_array_new);
+                    update_grid_cell_viscous(vis_array_new, hydro_fields, rk_flag,
+                                             ieta, ix, iy, n_cell_eta,
+                                             n_cell_x, n_cell_y);
                 }
             }
-//        }
-//        #pragma omp barrier
+        }
     }
     //clean up
     delete[] grid_array_temp;
