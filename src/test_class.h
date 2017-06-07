@@ -113,6 +113,7 @@ public:
                           double *qimhL, double *qimhR,
                           double *grid_array_hL, double *grid_array_hR);
 
+
 #pragma acc routine seq
     double p_e_func(double e_local, double rhob);
 
@@ -133,7 +134,7 @@ public:
             double *grid_array, Field *hydro_fields, int idx, int rk_flag);
 
 #pragma acc routine seq
-    double energy_gubser(double tau, double xperp);
+    double energy_gubser(double tau, double x, double y);
 #pragma acc routine seq
     void flow_gubser(double tau, double x, double y, double * utau, double * ux, double * uy);
 

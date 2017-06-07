@@ -32,7 +32,7 @@ double test::energy_gubser(double tau, double x, double y) {
 
 }
 
-void flow_gubser(double tau, double x, double y, double * utau, double * ux, double * uy) {
+void test::flow_gubser(double tau, double x, double y, double * utau, double * ux, double * uy) {
 
         const double qparam=GUBSER_Q;
         const double xperp=sqrt(x*x+y*y);
@@ -62,19 +62,32 @@ void test::initialize_hydro_fields(Field *hydro_fields) {
     hydro_fields->pi_b_rk1 = new double [n_cell];
     hydro_fields->pi_b_prev = new double [n_cell];
     for (int i = 0; i < n_cell; i++) {
-        hydro_fields->e_rk0[i] = 1.0;
-        hydro_fields->e_rk1[i] = 1.0;
-        hydro_fields->e_prev[i] = 1.0;
-        hydro_fields->rhob_rk0[i] = 1.0;
-        hydro_fields->rhob_rk1[i] = 1.0;
-        hydro_fields->rhob_prev[i] = 1.0;
+        int iy = i % 201;
+        int ix = (i - iy)/201;
+        double x_local = -10. + ix*0.05;
+        double y_local = -10. + iy*0.05;
+
+        hydro_fields->e_rk0[i] = energy_gubser(1.0, x_local, y_local);
+        hydro_fields->e_rk1[i] = energy_gubser(1.0, x_local, y_local);
+        hydro_fields->e_prev[i] = 0.0;
+        hydro_fields->rhob_rk0[i] = 0.0;
+        hydro_fields->rhob_rk1[i] = 0.0;
+        hydro_fields->rhob_prev[i] = 0.0;
         hydro_fields->u_rk0[i] = new double[4];
         hydro_fields->u_rk1[i] = new double[4];
         hydro_fields->u_prev[i] = new double[4];
+        double utau_local, ux_local, uy_local;
+        flow_gubser(1.0, x_local, y_local, &utau_local, &ux_local, &uy_local);
+        hydro_fields->u_rk0[i][0] = utau_local;
+        hydro_fields->u_rk0[i][1] = ux_local;
+        hydro_fields->u_rk0[i][2] = uy_local;
+        hydro_fields->u_rk1[i][0] = utau_local;
+        hydro_fields->u_rk1[i][1] = ux_local;
+        hydro_fields->u_rk1[i][2] = uy_local;
         hydro_fields->dUsup[i] = new double [20];
-        hydro_fields->Wmunu_rk0[i] = new double[4];
-        hydro_fields->Wmunu_rk1[i] = new double[4];
-        hydro_fields->Wmunu_prev[i] = new double[4];
+        hydro_fields->Wmunu_rk0[i] = new double[14];
+        hydro_fields->Wmunu_rk1[i] = new double[14];
+        hydro_fields->Wmunu_prev[i] = new double[14];
     }
 }
 
