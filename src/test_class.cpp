@@ -1,5 +1,8 @@
 #include "test_class.h"
+#include<iostream>
 #include<cmath>
+
+using namespace std;
 
 #define maxi(a, b) ((a) > (b) ? (a) : (b))
 #define mini(a, b) ((a) < (b) ? (a) : (b))
@@ -76,24 +79,29 @@ int test::run() {
                          hydro_fields->pi_b_prev[0:n_cell_length], \
                          )
 {
-    int n_cell_eta = 1;
-    int n_cell_x = 1;
-    int n_cell_y = 1;
-    double tau = 1.0;
-    int rk_flag = 0;
-    double grid_array[1][5], qi_array[1][5], qi_array_new[1][5], qi_rk0[1][5];
-    double qi_nbr_x[4][5], qi_nbr_y[4][5], qi_nbr_eta[4][5];
-    double *grid_array_temp = new double[5];
-    double *rhs = new double[5];
-    double *qiphL = new double[5];
-    double *qiphR = new double[5];
-    double *qimhL = new double[5];
-    double *qimhR = new double[5];
-    double *grid_array_hL = new double[5];
-    double *grid_array_hR = new double[5];
-    double vis_array[1][19], vis_array_new[1][19], vis_nbr_tau[1][19];
-    double velocity_array[1][20];
-    double vis_nbr_x[4][19], vis_nbr_y[4][19], vis_nbr_eta[4][19];
+    double tau0 = 1.;
+    double dt = 0.01;
+    int itmax = 200;
+    for (int it = 0; it <= itmax; it++) {
+        double tau = tau0 + dt*it;
+
+        int n_cell_eta = 1;
+        int n_cell_x = 1;
+        int n_cell_y = 1;
+        int rk_flag = 0;
+        double grid_array[1][5], qi_array[1][5], qi_array_new[1][5], qi_rk0[1][5];
+        double qi_nbr_x[4][5], qi_nbr_y[4][5], qi_nbr_eta[4][5];
+        double *grid_array_temp = new double[5];
+        double *rhs = new double[5];
+        double *qiphL = new double[5];
+        double *qiphR = new double[5];
+        double *qimhL = new double[5];
+        double *qimhR = new double[5];
+        double *grid_array_hL = new double[5];
+        double *grid_array_hR = new double[5];
+        double vis_array[1][19], vis_array_new[1][19], vis_nbr_tau[1][19];
+        double velocity_array[1][20];
+        double vis_nbr_x[4][19], vis_nbr_y[4][19], vis_nbr_eta[4][19];
 #pragma acc parallel
 {
 #pragma acc loop private ( qi_array[0:1][0:5],\
@@ -143,6 +151,10 @@ int test::run() {
     delete[] qimhR;
     delete[] grid_array_hL;
     delete[] grid_array_hR;
+    
+    cout << "Done time step " << it << "/" << itmax << ". tau = "
+         << tau << " fm/c" << endl;
+    }
 }
     return(0);
 };
