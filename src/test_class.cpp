@@ -21,6 +21,28 @@ int test::get_max (int a, int b) {
         return(a);
 };
 
+double test::energy_gubser(double tau, double x, double y) {
+
+        const double qparam=GUBSER_Q;
+        const double xperp=sqrt(x*x+y*y);
+
+        return (4*pow(2,0.66666)*pow(qparam,2.666666))/
+                (pow(tau,1.333333)*pow(1 + pow(qparam,4)*pow(pow(tau,2) - pow(xperp,2),2) + 2*pow(qparam,2)*(pow(tau,2) + pow(xperp,2)),
+                                       1.33333333));
+
+}
+
+void flow_gubser(double tau, double x, double y, double * utau, double * ux, double * uy) {
+
+        const double qparam=GUBSER_Q;
+        const double xperp=sqrt(x*x+y*y);
+
+        *utau=(1 + pow(qparam,2)*(pow(tau,2) + pow(xperp,2)))/ sqrt(1 + pow(qparam,4)*pow(pow(tau,2) - pow(xperp,2),2) + 2*pow(qparam,2)*(pow(tau,2) + pow(xperp,2)));
+        *ux=(qparam*x)/sqrt(1 + pow(-1 + pow(qparam,2)*(tau - xperp)*(tau + xperp),2)/(4.*pow(qparam,2)*pow(tau,2)));
+        *uy=(qparam*y)/sqrt(1 + pow(-1 + pow(qparam,2)*(tau - xperp)*(tau + xperp),2)/(4.*pow(qparam,2)*pow(tau,2)));
+
+}
+
 void test::initialize_hydro_fields(Field *hydro_fields) {
     int n_cell = 201*201*1;
     hydro_fields->e_rk0 = new double[n_cell];

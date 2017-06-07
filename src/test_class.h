@@ -1,3 +1,5 @@
+#define GUBSER_Q 2.0
+
 #include <stdio.h>
 
 struct Field {
@@ -129,6 +131,12 @@ public:
 #pragma acc routine seq
     void update_grid_array_to_hydro_fields(
             double *grid_array, Field *hydro_fields, int idx, int rk_flag);
+
+#pragma acc routine seq
+    double energy_gubser(double tau, double xperp);
+#pragma acc routine seq
+    void flow_gubser(double tau, double x, double y, double * utau, double * ux, double * uy);
+
 
     int run();
 
