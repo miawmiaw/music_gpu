@@ -118,6 +118,14 @@ int test::run() {
                                  n_cell_eta, n_cell_x, n_cell_y, qi_array,
                                  qi_nbr_x, qi_nbr_y, qi_nbr_eta,
                                  qi_rk0, grid_array, grid_array_temp);
+                FirstRKStepT(tau, rk_flag,
+                             qi_array, qi_nbr_x, qi_nbr_y, qi_nbr_eta,
+                             n_cell_eta, n_cell_x, n_cell_y,
+                             vis_array, vis_nbr_tau,
+                             vis_nbr_x, vis_nbr_y, vis_nbr_eta,
+                             qi_rk0, qi_array_new, grid_array,
+                             rhs, qiphL, qiphR, qimhL, qimhR,
+                             grid_array_hL, grid_array_hR);
             }
         }
     }
