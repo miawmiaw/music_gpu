@@ -81,6 +81,16 @@ int test::run() {
     double grid_array[1][5], qi_array[1][5], qi_array_new[1][5], qi_rk0[1][5];
     double qi_nbr_x[4][5], qi_nbr_y[4][5], qi_nbr_eta[4][5];
     double *grid_array_temp = new double[5];
+    double *rhs = new double[5];
+    double *qiphL = new double[5];
+    double *qiphR = new double[5];
+    double *qimhL = new double[5];
+    double *qimhR = new double[5];
+    double *grid_array_hL = new double[5];
+    double *grid_array_hR = new double[5];
+    double vis_array[1][19], vis_array_new[1][19], vis_nbr_tau[1][19];
+    double velocity_array[1][20];
+    double vis_nbr_x[4][19], vis_nbr_y[4][19], vis_nbr_eta[4][19];
 #pragma acc parallel
 {
 #pragma acc loop private ( qi_array[0:1][0:5],\
@@ -90,7 +100,17 @@ int test::run() {
                            qi_nbr_x[0:4][0:5],\
                            qi_nbr_y[0:4][0:5],\
                            qi_nbr_eta[0:4][0:5],\
-                           grid_array_temp[0:5])
+                           vis_array[0:1][0:19],\
+                           vis_array_new[0:1][0:19],\
+                           vis_nbr_tau[0:1][0:19],\
+                           velocity_array[0:1][0:20],\
+                           vis_nbr_x[0:4][0:19],\
+                           vis_nbr_y[0:4][0:19],\
+                           vis_nbr_eta[0:4][0:19], \
+                           grid_array_temp[0:5], \
+                           rhs[0:5], qiphL[0:5], qiphR[0:5], \
+                           qimhL[0:5], qimhR[0:5],\
+                           grid_array_hL[0:5], grid_array_hR[0:5])
     for (int ieta = 0; ieta < 1; ieta += n_cell_eta) {
         for (int ix = 0; ix <= 200; ix += n_cell_x) {
             for (int iy = 0; iy <= 200; iy += n_cell_y) {
@@ -103,9 +123,87 @@ int test::run() {
     }
 }
     delete[] grid_array_temp;
+    delete[] rhs;
+    delete[] qiphL;
+    delete[] qiphR;
+    delete[] qimhL;
+    delete[] qimhR;
+    delete[] grid_array_hL;
+    delete[] grid_array_hR;
 }
     return(0);
 };
+
+/* %%%%%%%%%%%%%%%%%%%%%% First steps begins here %%%%%%%%%%%%%%%%%% */
+int test::FirstRKStepT(double tau, int rk_flag,
+                          double qi_array[][5], double qi_nbr_x[][5],
+                          double qi_nbr_y[][5], double qi_nbr_eta[][5],
+                          int n_cell_eta, int n_cell_x, int n_cell_y,
+                          double vis_array[][19], double vis_nbr_tau[][19],
+                          double vis_nbr_x[][19], double vis_nbr_y[][19],
+                          double vis_nbr_eta[][19], double qi_rk0[][5],
+                          double qi_array_new[][5], double grid_array[][5],
+                          double *rhs, double *qiphL, double *qiphR,
+                          double *qimhL, double *qimhR,
+                          double *grid_array_hL, double *grid_array_hR) {
+
+    // this advances the ideal part
+    double tau_next = tau + 0.1;
+    double tau_rk;
+    if (rk_flag == 0) {
+        tau_rk = tau;
+    } else {
+        tau_rk = tau_next;
+    }
+
+    // Solve partial_a T^{a mu} = -partial_a W^{a mu}
+    // Update T^{mu nu}
+
+    // MakeDelatQI gets
+    //   qi = q0 if rk_flag = 0 or
+    //   qi = q0 + k1 if rk_flag = 1
+    // rhs[alpha] is what MakeDeltaQI outputs. 
+    // It is the spatial derivative part of partial_a T^{a mu}
+    // (including geometric terms)
+    //MakeDeltaQI(tau_rk, qi_array, qi_nbr_x, qi_nbr_y, qi_nbr_eta,
+    //            n_cell_eta, n_cell_x, n_cell_y, qi_array_new, grid_array,
+    //            rhs, qiphL, qiphR, qimhL, qimhR, grid_array_hL, grid_array_hR,
+    //            DATA);
+
+    // now MakeWSource returns partial_a W^{a mu}
+    // (including geometric terms) 
+    //MakeWSource(tau_rk, qi_array, n_cell_eta, n_cell_x, n_cell_y,
+    //            vis_array, vis_nbr_tau, vis_nbr_x, vis_nbr_y,
+    //            vis_nbr_eta, qi_array_new, DATA);
+    
+    if (rk_flag == 1) {
+        // if rk_flag == 1, we now have q0 + k1 + k2. 
+        // So add q0 and multiply by 1/2
+        for (int k = 0; k < n_cell_eta; k++) {
+            for (int i = 0; i < n_cell_x; i++) {
+                for (int j = 0; j < n_cell_y; j++) {
+                    int idx = j + i*n_cell_y + k*n_cell_y*n_cell_x;
+                    for (int alpha = 0; alpha < 5; alpha++) {
+                        qi_array_new[idx][alpha] += qi_rk0[idx][alpha];
+                        qi_array_new[idx][alpha] *= 0.5;
+                    }
+                }
+            }
+        }
+    }
+
+    //for (int k = 0; k < n_cell_eta; k++) {
+    //    for (int i = 0; i < n_cell_x; i++) {
+    //        for (int j = 0; j < n_cell_y; j++) {
+    //            int idx = j + i*n_cell_y + k*n_cell_x*n_cell_y;
+    //            ReconstIt_velocity_Newton(grid_array[idx], tau_next,
+    //                                      qi_array_new[idx],
+    //                                      grid_array[idx]);
+    //        }
+    //    }
+    //}
+    return(0);
+}
 
 void test::get_qmu_from_grid_array(double tau, double *qi,
                                       double *grid_array) {

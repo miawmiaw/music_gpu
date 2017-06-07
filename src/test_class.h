@@ -49,6 +49,19 @@ public:
     void get_qmu_from_grid_array(double tau, double *qi,
                                       double *grid_array);
 
+#pragma acc routine seq
+    int FirstRKStepT(double tau, int rk_flag,
+                          double qi_array[][5], double qi_nbr_x[][5],
+                          double qi_nbr_y[][5], double qi_nbr_eta[][5],
+                          int n_cell_eta, int n_cell_x, int n_cell_y,
+                          double vis_array[][19], double vis_nbr_tau[][19],
+                          double vis_nbr_x[][19], double vis_nbr_y[][19],
+                          double vis_nbr_eta[][19], double qi_rk0[][5],
+                          double qi_array_new[][5], double grid_array[][5],
+                          double *rhs, double *qiphL, double *qiphR,
+                          double *qimhL, double *qimhR,
+                          double *grid_array_hL, double *grid_array_hR);
+
     int run();
 
 };
