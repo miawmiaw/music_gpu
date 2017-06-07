@@ -129,6 +129,8 @@ int test::run() {
                              qi_rk0, qi_array_new, grid_array,
                              rhs, qiphL, qiphR, qimhL, qimhR,
                              grid_array_hL, grid_array_hR);
+                update_grid_cell(grid_array, hydro_fields, rk_flag,
+                                 ieta, ix, iy, n_cell_eta, n_cell_x, n_cell_y);
             }
         }
     }
@@ -1095,4 +1097,45 @@ double test::p_rho_func(double e_local, double rhob) {
 double test::get_mu(double e_local, double rhob) {
     double mu = 0.0;
     return(mu);
+}
+
+void test::update_grid_cell(double grid_array[][5], Field *hydro_fields, int rk_flag,
+                               int ieta, int ix, int iy,
+                               int n_cell_eta, int n_cell_x, int n_cell_y) {
+    for (int k = 0; k < n_cell_eta; k++) {
+        int idx_ieta = get_min(ieta + k, 0);
+        for (int i = 0; i < n_cell_x; i++) {
+            int idx_ix = get_min(ix + i, 200);
+            for (int j = 0; j < n_cell_y; j++) {
+                int idx_iy = get_min(iy + j, 200);
+                int field_idx = (idx_iy + idx_ix*(201)
+                                 + idx_ieta*(201)*(201));
+                int idx = j + i*n_cell_y + k*n_cell_x*n_cell_y;
+                update_grid_array_to_hydro_fields(
+                        grid_array[idx], hydro_fields, field_idx, rk_flag);
+            }
+        }
+    }
+}           
+
+void test::update_grid_array_to_hydro_fields(
+            double *grid_array, Field *hydro_fields, int idx, int rk_flag) {
+    double gamma = 1./sqrt(1. - grid_array[1]*grid_array[1]
+                              - grid_array[2]*grid_array[2]
+                              - grid_array[3]*grid_array[3]);
+    if (rk_flag == 0) {
+        hydro_fields->e_rk1[idx] = grid_array[0];
+        hydro_fields->rhob_rk1[idx] = grid_array[4];
+        hydro_fields->u_rk1[idx][0] = gamma;
+        for (int i = 1; i < 4; i++) {
+            hydro_fields->u_rk1[idx][i] = gamma*grid_array[i];
+        }
+    } else {
+        hydro_fields->e_rk0[idx] = grid_array[0];
+        hydro_fields->rhob_rk0[idx] = grid_array[4];
+        hydro_fields->u_rk0[idx][0] = gamma;
+        for (int i = 1; i < 4; i++) {
+            hydro_fields->u_rk0[idx][i] = gamma*grid_array[i];
+        }
+    }
 }

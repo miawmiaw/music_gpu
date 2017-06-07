@@ -123,6 +123,13 @@ public:
 #pragma acc routine seq
     double get_cs2(double e_local, double rhob);
 
+#pragma acc routine seq
+    void update_grid_cell(double grid_array[][5], Field *hydro_fields, int rk_flag, int ieta, int ix, int iy, int n_cell_eta, int n_cell_x, int n_cell_y);
+
+#pragma acc routine seq
+    void update_grid_array_to_hydro_fields(
+            double *grid_array, Field *hydro_fields, int idx, int rk_flag);
+
     int run();
 
 };
