@@ -137,6 +137,33 @@ int test::run() {
                              qi_rk0, qi_array_new, grid_array,
                              rhs, qiphL, qiphR, qimhL, qimhR,
                              grid_array_hL, grid_array_hR);
+            }
+        }
+    }
+}
+#pragma acc parallel
+{
+#pragma acc loop private ( qi_array[0:1][0:5],\
+                           qi_array_new[0:1][0:5],\
+                           qi_rk0[0:1][0:5],\
+                           grid_array[0:1][0:5],\
+                           qi_nbr_x[0:4][0:5],\
+                           qi_nbr_y[0:4][0:5],\
+                           qi_nbr_eta[0:4][0:5],\
+                           vis_array[0:1][0:19],\
+                           vis_array_new[0:1][0:19],\
+                           vis_nbr_tau[0:1][0:19],\
+                           velocity_array[0:1][0:20],\
+                           vis_nbr_x[0:4][0:19],\
+                           vis_nbr_y[0:4][0:19],\
+                           vis_nbr_eta[0:4][0:19], \
+                           grid_array_temp[0:5], \
+                           rhs[0:5], qiphL[0:5], qiphR[0:5], \
+                           qimhL[0:5], qimhR[0:5],\
+                           grid_array_hL[0:5], grid_array_hR[0:5])
+    for (int ieta = 0; ieta < 1; ieta += n_cell_eta) {
+        for (int ix = 0; ix <= 200; ix += n_cell_x) {
+            for (int iy = 0; iy <= 200; iy += n_cell_y) {
                 update_grid_cell(grid_array, hydro_fields, rk_flag,
                                  ieta, ix, iy, n_cell_eta, n_cell_x, n_cell_y);
             }
