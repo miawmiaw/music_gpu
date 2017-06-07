@@ -379,24 +379,102 @@ int Advance::AdvanceIt(double tau, InitData *DATA, Field *hydro_fields,
     double *qimhR = new double[5];
     double *grid_array_hL = new double[5];
     double *grid_array_hR = new double[5];
-#pragma acc loop private ( qi_array[0:1][0:5],\
-                           qi_array_new[0:1][0:5],\
-                           qi_rk0[0:1][0:5],\
-                           grid_array[0:1][0:5],\
-                           qi_nbr_x[0:4][0:5],\
-                           qi_nbr_y[0:4][0:5],\
-                           qi_nbr_eta[0:4][0:5],\
-                           vis_array[0:1][0:19],\
-                           vis_array_new[0:1][0:19],\
-                           vis_nbr_tau[0:1][0:19],\
-                           velocity_array[0:1][0:20],\
-                           vis_nbr_x[0:4][0:19],\
-                           vis_nbr_y[0:4][0:19],\
-                           vis_nbr_eta[0:4][0:19], \
-                           grid_array_temp[0:5],\
-                           rhs[0:5], qiphL[0:5], qiphR[0:5], \
-                           qimhL[0:5], qimhR[0:5],\
-                           grid_array_hL[0:5], grid_array_hR[0:5])
+    
+    
+    int spacial_index_total = grid_neta * (grid_nx + 1) * (grid_ny + 1);
+    double*** qi_array = new double**[spacial_index_total];
+    double*** qi_array_new = new double**[spacial_index_total];
+    double*** qi_rk0 = new double**[spacial_index_total];
+    double*** grid_array = new double**[spacial_index_total];
+    double*** qi_nbr_x = new double**[spacial_index_total];
+    double*** qi_nbr_y = new double**[spacial_index_total];
+    double*** qi_nbr_eta = new double**[spacial_index_total];
+    double*** vis_array = new double**[spacial_index_total];
+    double*** vis_array_new = new double**[spacial_index_total];
+    double*** vis_nbr_tau = new double**[spacial_index_total];
+    double*** vis_nbr_x = new double**[spacial_index_total];
+    double*** vis_nbr_y = new double**[spacial_index_total];
+    double*** vis_nbr_eta = new double**[spacial_index_total];
+    
+    for (int x = 0; x < spacial_index_total; ++x){
+        qi_array[x] = new double[cube_size];
+        qi_array_new[x] = new double[cube_size];
+        qi_rk0[x] = new double[cube_size];
+        grid_array[x] = new double[cube_size];
+        qi_nbr_x[x] = new double[neigh_sizex];
+        qi_nbr_y[x] = new double[neigh_sizey];
+        qi_nbr_eta[x] = new double[neigh_sizeeta];
+        vis_array[x] = new double[cube_size];
+        vis_array_new[x] = new double[cube_size];
+        vis_nbr_tau[x] = new double[cube_size];
+        vis_nbr_x[x] = new double[neigh_sizex];
+        vis_nbr_y[x] = new double[neigh_sizey];
+        vis_nbr_eta[x] = new double[neigh_sizeeta];
+        for (int y = 0; y < cube_size; ++y){
+            qi_array[x][y] = new double[5];
+            qi_array_new[x][y] = new double[5];
+            qi_rk0[x][y] = new double[5];
+            grid_array[x][y] = new double[5];
+            vis_array[x][y] = new double[19];
+            vis_array_new[x][y] = new double[19];
+            vis_nbr_tau[x][y] = new double[19];
+        }
+        for (int y = 0; y < neigh_sizex; ++y){
+            qi_nbr_x[x][y] = new double[5];
+            vis_nbr_x[x][y] = new double[19];
+        }
+        for (int y = 0; y < neigh_sizey; ++y){
+            qi_nbr_y[x][y] = new double[5];
+            vis_nbr_y[x][y] = new double[19];
+        }
+        for (int y = 0; y < neigh_sizeeta; ++y){
+            qi_nbr_eta[x][y] = new double[5];
+            vis_nbr_eta[x][y] = new double[19];
+        }
+    }
+    
+    double** grid_array_temp = new double*[spacial_index_total];
+    double** rhs = new double*[spacial_index_total];
+    double** qiphL = new double*[spacial_index_total];
+    double** qiphR = new double*[spacial_index_total];
+    double** qimhL = new double*[spacial_index_total];
+    double** qimhR = new double*[spacial_index_total];
+    double** grid_array_hL = new double*[spacial_index_total];
+    double** grid_array_hR = new double*[spacial_index_total];
+    
+    for (int x = 0; x < spacial_index_total; ++x){
+        grid_array_temp[x] = new double[5];
+        rhs [x] = new double[5];
+        qiphL[x] = new double[5];
+        qiphR[x] = new double[5];
+        qimhL[x] = new double[5];
+        qimhR[x] = new double[5];
+        grid_array_hL[x] = new double[5];
+        grid_array_hR[x] = new double[5];
+    }
+    
+    
+    #pragma acc parallel loop copyin(qi_array[0:spacial_index_total][0:cube_size][0:5],\
+                           qi_array_new[0:spacial_index_total][0:cube_size][0:5],\
+                           qi_rk0[0:spacial_index_total][0:cube_size][0:5],\
+                           grid_array[0:spacial_index_total][0:cube_size][0:5],\
+                           qi_nbr_x[0:spacial_index_total][0:neigh_sizex][0:5],\
+                           qi_nbr_y[0:spacial_index_total][0:neigh_sizey][0:5],\
+                           qi_nbr_eta[0:spacial_index_total][0:neigh_sizeeta][0:5],\
+                           vis_array[0:spacial_index_total][0:cube_size][0:19],\
+                           vis_array_new[0:spacial_index_total][0:cube_size][0:19],\
+                           vis_nbr_tau[0:spacial_index_total][0:cube_size][0:19],\
+                           vis_nbr_x[0:spacial_index_total][0:neigh_sizex][0:19],\
+                           vis_nbr_y[0:spacial_index_total][0:neigh_sizey][0:19],\
+                           vis_nbr_eta[0:spacial_index_total][0:neigh_sizeeta][0:19], \
+                           grid_array_temp[0:spacial_index_total][0:5],\
+                           rhs[0:spacial_index_total][0:5], \
+                           qiphL[0:spacial_index_total][0:5], \
+                           qiphR[0:spacial_index_total][0:5], \
+                           qimhL[0:spacial_index_total][0:5], \
+                           qimhR[0:spacial_index_total][0:5],\
+                           grid_array_hL[0:spacial_index_total][0:5], \
+                           grid_array_hR[0:spacial_index_total][0:5])
     for (int ieta = 0; ieta < grid_neta; ieta += n_cell_eta) {
 //        #pragma omp parallel private(ix)
 //        {
