@@ -397,12 +397,9 @@ int Advance::AdvanceIt(double tau, InitData *DATA, Field *hydro_fields,
     double *grid_array_hL = new double[5];
     double *grid_array_hR = new double[5];
 
-    double ***qi_array_debug = new double** [grid_neta * grid_nx * grid_ny];
+    double **qi_array_debug = new double** [grid_neta * grid_nx * grid_ny];
     for (int i = 0; i < grid_neta * grid_nx * grid_ny; ++i){
-        qi_array_debug[i] = new double * [cube_size];
-        for (int j = 0; j < cube_size; ++j){
-            qi_array_debug[i][j] = new double [5];
-        }
+        qi_array_debug[i] = new double * [cube_size * 5];
     }
     #pragma acc data copyin (hydro_fields[0:1], \
                          hydro_fields->e_rk0[0:n_cell_length], \
