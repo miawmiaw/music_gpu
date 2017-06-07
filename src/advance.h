@@ -86,11 +86,11 @@ class Advance {
 
     
 
-    double ** prepare_qi_array(
+    double * prepare_qi_array(
         double tau, Field *hydro_fields, int rk_flag, int ieta, int ix, int iy,
-        int n_cell_eta, int n_cell_x, int n_cell_y, double **qi_array,
-        double **qi_nbr_x, double **qi_nbr_y, double **qi_nbr_eta,
-        double **qi_rk0, double **grid_array, double *grid_array_temp, InitData *DATA);
+        int n_cell_eta, int n_cell_x, int n_cell_y, double *qi_array,
+        double *qi_nbr_x, double *qi_nbr_y, double *qi_nbr_eta,
+        double *qi_rk0, double *grid_array, double *grid_array_temp, InitData *DATA);
 
     void prepare_vis_array(
         Field *hydro_fields, int rk_flag, int ieta, int ix, int iy,
@@ -110,8 +110,7 @@ class Advance {
                      double **vis_nbr_y, double **vis_nbr_eta,
                      double **velocity_array, double **grid_array,
                      double **vis_array_new);
-    void update_grid_array_from_field(
-                Field *hydro_fields, int idx, double *grid_array, int rk_flag);
+    void update_grid_array_from_field( Field *hydro_fields, int idx, double *grid_array, int rk_flag, int index);
 
     void update_vis_array_from_field(Field *hydro_fields, int idx,
                                      double *vis_array, int rk_flag);
@@ -134,7 +133,7 @@ class Advance {
 
     //! This function computes the vector [T^\tau\mu, J^\tau] from the
     //! grid_array [e, v^i, rhob]
-    void get_qmu_from_grid_array(double tau, double *qi, double *grid_array);
+    void get_qmu_from_grid_array(double tau, double *qi, double *grid_array, int index);
 };
 
 #endif  // SRC_ADVANCE_H_
