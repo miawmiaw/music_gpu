@@ -1,5 +1,4 @@
 // Copyright 2012 Bjoern Schenke, Sangyong Jeon, and Charles Gale
-#include <omp.h>
 #include "./evolve.h"
 #include "./util.h"
 #include "./data.h"
@@ -362,31 +361,33 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
                          hydro_fields->rhob_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA], \
                          hydro_fields->u_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][0:4], \
                          hydro_fields->Wmunu_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][0:14], \
-			 hydro_fields->pi_b_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA],\
-			 grid_array[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][1][5],\
-			 qi_array[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][1][5],\
-			 qi_array_new[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][1][5],\
-			 qi_rk0[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][1][5],\
-			 qi_nbr_x[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][4][5],\
-			 qi_nbr_y[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][4][5],\
-			 qi_nbr_eta[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][4][5],\
-			 vis_array[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][1][19],\
-			 vis_array_new[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][1][19],\
-			 vis_nbr_tau[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][1][19],\
-			 velocity_array[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][1][20],\
-			 vis_nbr_x[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][4][19],\
-			 vis_nbr_y[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][4][19],\
-			 vis_nbr_eta[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][4][19],\
-			 grid_array_temp[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][5],\
-			 rhs[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][5],\
-			 qiphL[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][5],\
-			 qiphR[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][5],\
-			 qimhL[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][5],\
-			 qimhR[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][5],\
-			 grid_array_hL[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][5],\
-			 grid_array_hR[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][5])
-    {
+			 hydro_fields->pi_b_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA],)
+{
         cout << "Post data copy" << endl;
+        #pragma acc data create(grid_array[GRID_SIZE][1][5],\
+			 qi_array[GRID_SIZE][1][5],\
+			 qi_array_new[GRID_SIZE][1][5],\
+			 qi_rk0[GRID_SIZE][1][5],\
+			 qi_nbr_x[GRID_SIZE][4][5],\
+			 qi_nbr_y[GRID_SIZE][4][5],\
+			 qi_nbr_eta[GRID_SIZE][4][5],\
+			 vis_array[GRID_SIZE][1][19],\
+			 vis_array_new[GRID_SIZE][1][19],\
+			 vis_nbr_tau[GRID_SIZE][1][19],\
+			 velocity_array[GRID_SIZE][1][20],\
+			 vis_nbr_x[GRID_SIZE][4][19],\
+			 vis_nbr_y[GRID_SIZE][4][19],\
+			 vis_nbr_eta[GRID_SIZE][4][19],\
+			 grid_array_temp[GRID_SIZE][5],\
+			 rhs[GRID_SIZE][5],\
+			 qiphL[GRID_SIZE][5],\
+			 qiphR[GRID_SIZE][5],\
+			 qimhL[GRID_SIZE][5],\
+			 qimhR[GRID_SIZE][5],\
+			 grid_array_hL[GRID_SIZE][5],\
+			 grid_array_hR[GRID_SIZE][5])
+    {
+
         for (int oit = 0; oit <= itmax; oit += 10) {
             
             #pragma acc parallel loop gang worker vector async(1)
@@ -504,7 +505,7 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
             for (int x = 0; x < (GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; ++x){
                 hydro_fields->Wmunu_perm[x] = new double[14];
             }
-            
+            }
         }
     }
 }
@@ -554,13 +555,13 @@ void Evolve::store_previous_step_for_freezeout(Grid ***arena) {
 int Evolve::Update_prev_Arena(Grid ***arena) {
     int neta = grid_neta;
     int ieta;
-    #pragma omp parallel private(ieta)
-    {
-        #pragma omp for
+//    #pragma omp parallel private(ieta)
+//    {
+//        #pragma omp for
         for (ieta = 0; ieta < neta; ieta++) {
             Update_prev_Arena_XY(ieta, arena);
         } /* ieta */
-    }
+//    }
     return 1;
 }
 
@@ -737,7 +738,8 @@ int Evolve::FindFreezeOutSurface_Cornelius(double tau, InitData *DATA,
         {
             #pragma omp for
             for (ieta = 0; ieta < (neta-fac_eta); ieta += fac_eta) {
-                int thread_id = omp_get_thread_num();
+//                int thread_id = omp_get_thread_num();
+		int thread_id = 0;
                 intersections += FindFreezeOutSurface_Cornelius_XY(
                                     tau, DATA, ieta, arena, thread_id, epsFO);
             }
@@ -1517,7 +1519,8 @@ int Evolve::FreezeOut_equal_tau_Surface(double tau, InitData *DATA,
         {
             #pragma omp for
             for (ieta = 0; ieta < neta - fac_eta; ieta += fac_eta) {
-                int thread_id = omp_get_thread_num();
+//                int thread_id = omp_get_thread_num();
+		int thread_id = 0;
                 FreezeOut_equal_tau_Surface_XY(tau, DATA, ieta, arena,
                                                thread_id, epsFO);
             }

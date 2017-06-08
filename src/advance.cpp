@@ -38,9 +38,9 @@ Advance::~Advance() {
 void Advance::prepare_qi_array(
         double tau, Field *hydro_fields, int rk_flag, int ieta, int ix, int iy,
         int sub_grid_neta, int sub_grid_x, int sub_grid_y,
-        double qi_array[][5], double qi_nbr_x[][5],
-        double qi_nbr_y[][5], double qi_nbr_eta[][5],
-        double qi_rk0[][5], double grid_array[][5], double *grid_array_temp) {
+        double** qi_array, double** qi_nbr_x,
+        double** qi_nbr_y, double** qi_nbr_eta,
+        double** qi_rk0, double** grid_array, double *grid_array_temp) {
 
     double tau_rk;
     if (rk_flag == 0) {
@@ -363,7 +363,6 @@ int Advance::AdvanceIt(double tau, Field *hydro_fields,
     //const int neigh_sizex=4*SUB_GRID_SIZE_Y*SUB_GRID_SIZE_ETA;
     //const int neigh_sizey=4*SUB_GRID_SIZE_X*SUB_GRID_SIZE_ETA;
     //const int neigh_sizeeta=4*SUB_GRID_SIZE_X*SUB_GRID_SIZE_Y;
-    double tmp[2]={-1.1, -2.2};
     // double grid_array[1][5], qi_array[1][5], qi_array_new[1][5], qi_rk0[1][5];
     // double qi_nbr_x[4][5], qi_nbr_y[4][5], qi_nbr_eta[4][5];
     // double vis_array[1][19], vis_array_new[1][19], vis_nbr_tau[1][19];
@@ -378,26 +377,18 @@ int Advance::AdvanceIt(double tau, Field *hydro_fields,
     // double grid_array_hL[5];
     // double grid_array_hR[5];
     
-    #pragma acc loop gang worker vector collapse(3) private(this[0:1], grid_array[0:1][0:5], \
-                         qi_array[0:1][0:5], qi_array_new[0:1][0:5], qi_rk0[0:1][0:5], \
-                         qi_nbr_x[0:4][0:5], qi_nbr_y[0:4][0:5], qi_nbr_eta[0:4][0:5], vis_array[0:1][0:19], \
-                         vis_array_new[0:1][0:19], vis_nbr_tau[0:1][0:19], velocity_array[0:1][0:20], \
-                         vis_nbr_x[0:4][0:19], vis_nbr_y[0:4][0:19], vis_nbr_eta[0:4][0:19], grid_array_temp[0:5], \
-                         grid_array_hL[0:5], qimhL[0:5], grid_array_hR[0:5], qiphL[0:5], qimhR[0:5], \
-                         rhs[0:5], qiphR[0:5])
+    #pragma acc loop gang worker vector collapse(3)
     for (int ieta = 0; ieta < GRID_SIZE_ETA; ieta += SUB_GRID_SIZE_ETA) {
 //        #pragma omp parallel private(ix)
 //        {
 //            #pragma omp for
             for (int ix = 0; ix <= GRID_SIZE_X; ix += SUB_GRID_SIZE_X) {
                 for (int iy = 0; iy <= GRID_SIZE_Y; iy += SUB_GRID_SIZE_Y) {
-
-                        tmp[0]=tau; //hydro_fields->e_rk0[0];
-
+                   int indx = iy + ix*(GRID_SIZE_Y + 1) + ieta*(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1);
                    prepare_qi_array(tau, hydro_fields, rk_flag, ieta, ix, iy,
-                                    SUB_GRID_SIZE_ETA, SUB_GRID_SIZE_X, SUB_GRID_SIZE_Y, qi_array,
-                                    qi_nbr_x, qi_nbr_y, qi_nbr_eta,
-                                    qi_rk0, grid_array, grid_array_temp);
+                                    SUB_GRID_SIZE_ETA, SUB_GRID_SIZE_X, SUB_GRID_SIZE_Y, qi_array[indx],
+                                    qi_nbr_x[indx], qi_nbr_y[indx], qi_nbr_eta[indx],
+                                    qi_rk0[indx], grid_array[indx], grid_array_temp[indx]);
 //                        tmp=grid_array[0][0]; //hydro_fields->e_rk0[10];
                     // viscous source terms
 //                    prepare_vis_array(hydro_fields, rk_flag, ieta, ix, iy,
@@ -406,15 +397,15 @@ int Advance::AdvanceIt(double tau, Field *hydro_fields,
 //                                      vis_nbr_y, vis_nbr_eta);
 
                    FirstRKStepT(tau, rk_flag,
-                                qi_array, qi_nbr_x, qi_nbr_y, qi_nbr_eta,
+                                qi_array[indx], qi_nbr_x[indx], qi_nbr_y[indx], qi_nbr_eta[indx],
                                 SUB_GRID_SIZE_ETA, SUB_GRID_SIZE_X, SUB_GRID_SIZE_Y,
-                                vis_array, vis_nbr_tau,
-                                vis_nbr_x, vis_nbr_y, vis_nbr_eta,
-                                qi_rk0, qi_array_new, grid_array,
-                                rhs, qiphL, qiphR, qimhL, qimhR,
-                                grid_array_hL, grid_array_hR);
+                                vis_array[indx], vis_nbr_tau[indx],
+                                vis_nbr_x[indx], vis_nbr_y[indx], vis_nbr_eta[indx],
+                                qi_rk0[indx], qi_array_new[indx], grid_array[indx],
+                                rhs[indx], qiphL[indx], qiphR[indx], qimhL[indx], qimhR[indx],
+                                grid_array_hL[indx], grid_array_hR[indx]);
 
-                    update_grid_cell(grid_array, hydro_fields, rk_flag, ieta, ix, iy,
+                    update_grid_cell(grid_array[indx], hydro_fields, rk_flag, ieta, ix, iy,
                                      SUB_GRID_SIZE_ETA, SUB_GRID_SIZE_X, SUB_GRID_SIZE_Y);
 
 //                    if (VISCOUS_FLAG == 1) {
@@ -452,13 +443,13 @@ int Advance::AdvanceIt(double tau, Field *hydro_fields,
 
 /* %%%%%%%%%%%%%%%%%%%%%% First steps begins here %%%%%%%%%%%%%%%%%% */
 int Advance::FirstRKStepT(double tau, int rk_flag,
-                          double qi_array[][5], double qi_nbr_x[][5],
-                          double qi_nbr_y[][5], double qi_nbr_eta[][5],
+                          double** qi_array, double** qi_nbr_x,
+                          double** qi_nbr_y, double** qi_nbr_eta,
                           int sub_grid_neta, int sub_grid_x, int sub_grid_y,
-                          double vis_array[][19], double vis_nbr_tau[][19],
-                          double vis_nbr_x[][19], double vis_nbr_y[][19],
-                          double vis_nbr_eta[][19], double qi_rk0[][5],
-                          double qi_array_new[][5], double grid_array[][5],
+                          double** vis_array, double** vis_nbr_tau,
+                          double** vis_nbr_x, double** vis_nbr_y,
+                          double** vis_nbr_eta, double** qi_rk0,
+                          double** qi_array_new, double** grid_array,
                           double *rhs, double *qiphL, double *qiphR,
                           double *qimhL, double *qimhR,
                           double *grid_array_hL, double *grid_array_hR) {
@@ -1031,10 +1022,10 @@ int Advance::QuestRevert(double tau, double *vis_array, double *grid_array) {
 
 //! This function computes the rhs array. It computes the spatial
 //! derivatives of T^\mu\nu using the KT algorithm
-void Advance::MakeDeltaQI(double tau, double qi_array[][5], double qi_nbr_x[][5],
-                          double qi_nbr_y[][5], double qi_nbr_eta[][5],
+void Advance::MakeDeltaQI(double tau, double** qi_array, double** qi_nbr_x,
+                          double** qi_nbr_y, double** qi_nbr_eta,
                           int sub_grid_neta, int sub_grid_x, int sub_grid_y,
-                          double qi_array_new[][5], double grid_array[][5],
+                          double** qi_array_new, double** grid_array,
                           double *rhs, double *qiphL, double *qiphR,
                           double *qimhL, double *qimhR,
                           double *grid_array_hL, double *grid_array_hR) {
@@ -1488,7 +1479,7 @@ void Advance::get_qmu_from_grid_array(double tau, double qi[5],
     qi[4] = tau*rhob*gamma;
 }
 
-void Advance::update_grid_cell(double grid_array[][5], Field *hydro_fields, int rk_flag,
+void Advance::update_grid_cell(double** grid_array, Field *hydro_fields, int rk_flag,
                                int ieta, int ix, int iy,
                                int sub_grid_neta, int sub_grid_x, int sub_grid_y) {
     for (int k = 0; k < sub_grid_neta; k++) {

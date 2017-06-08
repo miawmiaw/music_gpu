@@ -7,7 +7,7 @@
 #define GRID_SIZE_X 200
 #define GRID_SIZE_Y 200
 #define GRID_SIZE_ETA 8
-
+#define GRID_SIZE 323208
 #define SUB_GRID_SIZE_X 1
 #define SUB_GRID_SIZE_Y 1
 #define SUB_GRID_SIZE_ETA 1
