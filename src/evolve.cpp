@@ -145,8 +145,8 @@ void Evolve::check_field_with_ideal_Gubser(double tau, Field *hydro_fields) {
             }
         }
     }
-    cout << "e_diff: " << e_diff/e_total << ", ux_diff: " << ux_diff/ux_total
-         << ", uy_diff: " << uy_diff/uy_total << endl;
+    cout << "e_diff: " << e_diff/e_total << ", ux_diff: " << ux_diff/ux_total << "(" << ux_diff << "," << ux_total << ")"
+         << ", uy_diff: " << uy_diff/uy_total << "(" << uy_diff << "," << uy_total << ")" << endl;
 }
 
 // master control function for hydrodynamic evolution
@@ -2173,8 +2173,9 @@ double Evolve::energy_gubser(double tau, double x, double y) {
 
     const double qparam = GUBSER_Q;
     const double xperp = sqrt(x*x+y*y);
+    const double bjorken_energy=5.0/pow(2*qparam,8./3.); 
 
-    return (4*pow(2, 0.66666)*pow(qparam, 2.666666))
+    return bjorken_energy*(4*pow(2, 0.66666)*pow(qparam, 2.666666))
             /(pow(tau,1.333333)*pow(1 + pow(qparam,4)*pow(pow(tau,2) - pow(xperp,2),2) + 2*pow(qparam,2)*(pow(tau,2) + pow(xperp,2)),
                                        1.33333333));
 }

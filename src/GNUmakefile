@@ -10,13 +10,15 @@
 ##			distclean	remove all objectsfiles and binaries
 ##  
 
-CC := g++-mp-5
-CFLAGS= -Wall -O3 -fopenmp
-#CFLAGS= -Wall -g -fopenmp
+CC := g++
+CFLAGS= -g3 -fopenmp -fsanitize=thread #-fsanitize=bounds-strict
+#CFLAGS= -g -O3 -fopenmp -fsanitize=address #-fsanitize=bounds-strict
+#CFLAGS= -O3 -acc -ta=tesla:cc35 -Minfo=accel
+#CFLAGS= -O3 -acc -ta=tesla:cc35  --no_warnings 
 
 RM		=	rm -f
 O               =       .o
-LDFLAGS         =       $(CFLAGS)
+LDFLAGS         =       $(CFLAGS) $(shell gsl-config --libs)
 SYSTEMFILES     =       $(SRCGNU)
 
 # --------------- Files involved ------------------
@@ -32,8 +34,7 @@ SRC		=	main.cpp music.cpp grid.cpp eos.cpp init.cpp \
 
 INC		= 	music.h grid.h eos.h init.h util.h data.h \
 			evolve.h advance.h u_derivative.h reconst.h dissipative.h \
-			minmod.h grid_info.h cornelius.h read_in_parameters.h emoji.h \
-			field.h
+			minmod.h grid_info.h cornelius.h read_in_parameters.h emoji.h field.h \
 
 # -------------------------------------------------
 

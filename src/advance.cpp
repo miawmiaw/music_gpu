@@ -390,7 +390,7 @@ int Advance::AdvanceIt(double tau, Field *hydro_fields,
     
 
     cout << "pre parallel" << endl;
-    #pragma acc parallel loop gang worker vector collapse(3) copy(tmp[0:1]) present(hydro_fields[0:1],\
+    #pragma acc parallel loop gang worker vector collapse(3) copy(tmp[0:2]) present(hydro_fields[0:1],\
                          hydro_fields->e_rk0[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA],\
                          hydro_fields->e_prev[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA],\
                          hydro_fields->rhob_rk0[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA],\
@@ -420,7 +420,8 @@ int Advance::AdvanceIt(double tau, Field *hydro_fields,
             for (int ix = 0; ix <= GRID_SIZE_X; ix += SUB_GRID_SIZE_X) {
                 for (int iy = 0; iy <= GRID_SIZE_Y; iy += SUB_GRID_SIZE_Y) {
 
-                        tmp[0]=tau; //hydro_fields->e_rk0[0];
+                        tmp[0]=hydro_fields->e_rk0[10+10*20];
+                        tmp[1]=hydro_fields->e_rk0[0];
 
                    prepare_qi_array(tau, hydro_fields, rk_flag, ieta, ix, iy,
                                     SUB_GRID_SIZE_ETA, SUB_GRID_SIZE_X, SUB_GRID_SIZE_Y, qi_array,
@@ -450,12 +451,12 @@ int Advance::AdvanceIt(double tau, Field *hydro_fields,
                     update_grid_cell(grid_array, hydro_fields, rk_flag, ieta, ix, iy,
                                      SUB_GRID_SIZE_ETA, SUB_GRID_SIZE_X, SUB_GRID_SIZE_Y);
 
-//                    if (VISCOUS_FLAG == 1) {
-//                        double tau_rk = tau;
-//                        if (rk_flag == 1) {
-//                            tau_rk = tau + DELTA_TAU;
-//                        }
-//
+                    if (VISCOUS_FLAG == 1) {
+                        double tau_rk = tau;
+                        if (rk_flag == 1) {
+                            tau_rk = tau + DELTA_TAU;
+                        }
+
       //                  prepare_velocity_array(tau_rk, hydro_fields,
       //                                         ieta, ix, iy,
       //                                         rk_flag, SUB_GRID_SIZE_ETA, SUB_GRID_SIZE_X,
@@ -475,10 +476,10 @@ int Advance::AdvanceIt(double tau, Field *hydro_fields,
                    }
                 }
             }
-//        }
+        }
 //        #pragma omp barrier
     //clean up
-    std::cout << "tmp=" << tmp[0] << " " << tmp[1] << " vs " << 5*pow(1./tau, 4./3.) << "\n";
+    if (rk_flag == 0) std::cout << "tmp=" << tmp[0] << " " << tmp[1] << " vs " << 5*pow(1./tau, 4./3.) << "\n";
     //std::cout << "tmp=" << tmp[0]  << "\n";
 
     return(1);
