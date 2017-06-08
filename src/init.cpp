@@ -21,28 +21,35 @@ Init::~Init() {
 void Init::initialize_hydro_fields(Field *hydro_fields, InitData *DATA) {
     int n_cell = GRID_SIZE_ETA*(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1);
     hydro_fields->e_rk0 = new double[n_cell];
+    hydro_fields->e_perm = new double[n_cell];
     hydro_fields->e_rk1 = new double[n_cell];
     hydro_fields->e_prev = new double[n_cell];
     hydro_fields->rhob_rk0 = new double[n_cell];
+    hydro_fields->rhob_perm = new double[n_cell];
     hydro_fields->rhob_rk1 = new double[n_cell];
     hydro_fields->rhob_prev = new double[n_cell];
     hydro_fields->u_rk0 = new double* [n_cell];
+    hydro_fields->u_perm = new double* [n_cell];
     hydro_fields->u_rk1 = new double* [n_cell];
     hydro_fields->u_prev = new double* [n_cell];
     hydro_fields->dUsup = new double* [n_cell];
     hydro_fields->Wmunu_rk0 = new double* [n_cell];
+    hydro_fields->Wmunu_perm = new double* [n_cell];
     hydro_fields->Wmunu_rk1 = new double* [n_cell];
     hydro_fields->Wmunu_prev = new double* [n_cell];
     for (int i = 0; i < n_cell; i++) {
         hydro_fields->u_rk0[i] = new double[4];
+        hydro_fields->u_perm[i] = new double[4];
         hydro_fields->u_rk1[i] = new double[4];
         hydro_fields->u_prev[i] = new double[4];
         hydro_fields->dUsup[i] = new double[20];
         hydro_fields->Wmunu_rk0[i] = new double[14];
+        hydro_fields->Wmunu_perm[i] = new double[14];
         hydro_fields->Wmunu_rk1[i] = new double[14];
         hydro_fields->Wmunu_prev[i] = new double[14];
     }
     hydro_fields->pi_b_rk0 = new double[n_cell];
+    hydro_fields->pi_b_perm = new double[n_cell];
     hydro_fields->pi_b_rk1 = new double[n_cell];
     hydro_fields->pi_b_prev = new double[n_cell];
 }

@@ -97,10 +97,243 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
     DATA->delta_y = DELTA_Y;
     DATA->delta_eta = DELTA_ETA;
     double tau;
-    //DataDump dat;
+    DataDump dat;
+    
+    dat.e = new double*[itmax/10+1];
+    dat.rhob = new double*[itmax/10+1];
+    dat.u = new double**[itmax/10+1];
+    dat.Wmunu = new double**[itmax/10+1];
+    dat.pi_b = new double*[itmax/10+1];
+
+
+    int DIM=(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA;
+
+    //    double tmp[2]={-1.1, -2.2};
+    double ***grid_array;
+    grid_array = new double**[DIM];
+    for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
+      {
+	grid_array[idx] = new double *[1];
+	for (int idy=0; idy<1; idy++)
+	  {
+	    grid_array[idx][1] = new double[5];
+	  }
+      }
+
+    double ***qi_array_new;
+    qi_array_new = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
+      {
+	qi_array_new[idx] = new double *[1];
+	for (int idy=0; idy<1; idy++)
+	  {
+	    qi_array_new[idx][1] = new double[5];
+	  }
+      }
+
+    double ***qi_rk0;
+    qi_rk0 = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
+      {
+	qi_rk0[idx] = new double *[1];
+	for (int idy=0; idy<1; idy++)
+	  {
+	    qi_rk0[idx][1] = new double[5];
+	  }
+      }
+
+    double ***qi_array_rk0;
+    qi_array_rk0 = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
+      {
+	qi_array_rk0[idx] = new double *[1];
+	for (int idy=0; idy<1; idy++)
+	  {
+	    qi_array_rk0[idx][1] = new double[5];
+	  }
+      }
+
+    double ***qi_array;
+    qi_array = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
+      {
+	qi_array[idx] = new double *[1];
+	for (int idy=0; idy<1; idy++)
+	  {
+	    qi_array[idx][1] = new double[5];
+	  }
+      }
+
+    double ***qi_nbr_x;
+    qi_nbr_x = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
+      {
+	qi_nbr_x[idx] = new double *[4];
+	for (int idy=0; idy<4; idy++)
+	  {
+	    qi_nbr_x[idx][1] = new double[5];
+	  }
+      }
+
+    double ***qi_nbr_y;
+    qi_nbr_y = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
+      {
+	qi_nbr_y[idx] = new double *[4];
+	for (int idy=0; idy<4; idy++)
+	  {
+	    qi_nbr_y[idx][1] = new double[5];
+	  }
+      }
+
+    double ***qi_nbr_eta;
+    qi_nbr_eta = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
+      {
+	qi_nbr_eta[idx] = new double *[4];
+	for (int idy=0; idy<4; idy++)
+	  {
+	    qi_nbr_eta[idx][1] = new double[5];
+	  }
+      }
+
+    double ***vis_array;
+    vis_array = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
+      {
+	vis_array[idx] = new double *[1];
+	for (int idy=0; idy<1; idy++)
+	  {
+	    vis_array[idx][1] = new double[19];
+	  }
+      }
+
+    double ***vis_array_new;
+    vis_array_new = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
+      {
+	vis_array_new[idx] = new double *[1];
+	for (int idy=0; idy<1; idy++)
+	  {
+	    vis_array_new[idx][1] = new double[19];
+	  }
+      }
+
+    double ***vis_nbr_tau;
+    vis_nbr_tau = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
+      {
+	vis_nbr_tau[idx] = new double *[1];
+	for (int idy=0; idy<1; idy++)
+	  {
+	    vis_nbr_tau[idx][1] = new double[19];
+	  }
+      }
+
+    double ***velocity_array;
+    velocity_array = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
+      {
+	velocity_array[idx] = new double *[1];
+	for (int idy=0; idy<1; idy++)
+	  {
+	    velocity_array[idx][1] = new double[20];
+	  }
+      }
+
+    double ***vis_nbr_x;
+    vis_nbr_x = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
+      {
+	vis_nbr_x[idx] = new double *[4];
+	for (int idy=0; idy<4; idy++)
+	  {
+	    vis_nbr_x[idx][1] = new double[19];
+	  }
+      }
+
+    double ***vis_nbr_y;
+    vis_nbr_y = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
+      {
+	vis_nbr_y[idx] = new double *[4];
+	for (int idy=0; idy<4; idy++)
+	  {
+	    vis_nbr_y[idx][1] = new double[19];
+	  }
+      }
+
+    double *** vis_nbr_eta;
+    vis_nbr_eta = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
+      {
+	vis_nbr_eta[idx] = new double *[4];
+	for (int idy=0; idy<4; idy++)
+	  {
+	    vis_nbr_eta[idx][1] = new double[19];
+	  }
+      }
+
+    double **grid_array_temp;
+    grid_array_temp = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
+      {
+	grid_array_temp[idx] = new double [5];
+      }
+
+    double **rhs;
+    rhs = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
+      {
+	rhs[idx] = new double [5];
+      }
+
+    double **qiphL;
+    qiphL = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
+      {
+	qiphL[idx] = new double [5];
+      }
+
+    double **qiphR;
+    qiphR = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
+      {
+	qiphR[idx] = new double [5];
+      }
+
+    double **qimhL;
+    qimhL = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
+      {
+	qiphL[idx] = new double [5];
+      }
+
+    double **qimhR;
+    qimhR = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
+      {
+	qiphR[idx] = new double [5];
+      }
+
+    double **grid_array_hL;
+    grid_array_hL = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
+      {
+	grid_array_hL[idx] = new double [5];
+      }
+
+    double **grid_array_hR;
+    grid_array_hR = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
+      {
+	grid_array_hR[idx] = new double [5];
+      }
+
+    
     //int it_start = 0;
     cout << "Pre data copy" << endl;
-    #pragma acc data copyin (hydro_fields[0:1],\
+#pragma acc data copyin (this[0:1],hydro_fields[0:1],			\
                          hydro_fields->e_rk0[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA],\
                          hydro_fields->e_prev[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA],\
                          hydro_fields->rhob_rk0[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA],\
@@ -129,7 +362,29 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
                          hydro_fields->rhob_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA], \
                          hydro_fields->u_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][0:4], \
                          hydro_fields->Wmunu_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][0:14], \
-                         hydro_fields->pi_b_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA])
+			 hydro_fields->pi_b_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA],\
+			 grid_array[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][1][5],\
+			 qi_array[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][1][5],\
+			 qi_array_new[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][1][5],\
+			 qi_rk0[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][1][5],\
+			 qi_nbr_x[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][4][5],\
+			 qi_nbr_y[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][4][5],\
+			 qi_nbr_eta[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][4][5],\
+			 vis_array[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][1][19],\
+			 vis_array_new[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][1][19],\
+			 vis_nbr_tau[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][1][19],\
+			 velocity_array[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][1][20],\
+			 vis_nbr_x[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][4][19],\
+			 vis_nbr_y[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][4][19],\
+			 vis_nbr_eta[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][4][19],\
+			 grid_array_temp[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][5],\
+			 rhs[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][5],\
+			 qiphL[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][5],\
+			 qiphR[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][5],\
+			 qimhL[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][5],\
+			 qimhR[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][5],\
+			 grid_array_hL[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][5],\
+			 grid_array_hR[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][5])
     {
         cout << "Post data copy" << endl;
         for (int oit = 0; oit <= itmax; oit += 10) {
@@ -142,12 +397,11 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
                 hydro_fields->Wmunu_perm[x] = hydro_fields->Wmunu_rk0[x];
                 hydro_fields->pi_b_perm[x] = hydro_fields->pi_b_rk0[x];
             }
-            if (oit == 10){
-                #pragma acc update host(hydro_fields->e_rk0[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA])
-                for (int x = 0; x < (GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; ++x){
-                    cout << hydro_fields->e_rk0[x] << endl;
+              #pragma acc update host(hydro_fields->e_rk0[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA])
+		//                for (int x = 0; x < (GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; ++x){
+		for (int x = 0; x < 1; x++){
+		  cout << oit << " " << hydro_fields->e_rk0[x] << endl;
                 }
-            }
             #pragma acc parallel async(2) wait(1)
             for (int it = oit; it < oit + 10; ++it){
                 tau = tau0 + dt*it;
@@ -196,7 +450,7 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
 
                 /* execute rk steps */
                 // all the evolution are at here !!!
-                AdvanceRK(tau, DATA, hydro_fields);
+       	        AdvanceRK(tau, hydro_fields, grid_array, qi_array, qi_array_new, qi_rk0, qi_nbr_x, qi_nbr_y, qi_nbr_eta, vis_array, vis_array_new, vis_nbr_tau, velocity_array, vis_nbr_x, vis_nbr_y, vis_nbr_eta, grid_array_temp, rhs, qiphL, qiphR, qimhL, qimhR, grid_array_hL, grid_array_hR);
                 //copy_fields_to_grid(hydro_fields, arena);
             
                 //determine freeze-out surface
@@ -234,11 +488,11 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
 
 
             #pragma acc wait(1)
-            dat.e[(oit/10)-1]=hydro_fields->e_perm;
-            dat.rhob[(oit/10)-1]=hydro_fields->rhob_perm;
-            dat.u[(oit/10)-1]=hydro_fields->u_perm;
-            dat.Wmunu[(oit/10)-1]=hydro_fields->Wmunu_perm;
-            dat.pi_b[(oit/10)-1]=hydro_fields->pi_b_perm;
+            dat.e[(oit/10)]=hydro_fields->e_perm;
+            dat.rhob[(oit/10)]=hydro_fields->rhob_perm;
+            dat.u[(oit/10)]=hydro_fields->u_perm;
+            dat.Wmunu[(oit/10)]=hydro_fields->Wmunu_perm;
+            dat.pi_b[(oit/10)]=hydro_fields->pi_b_perm;
             hydro_fields->e_perm = new double[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
             hydro_fields->rhob_perm = new double[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
             hydro_fields->u_perm = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
@@ -419,12 +673,12 @@ void Evolve::convert_grid_to_field(Grid ***arena, Field *hydro_fields) {
 
 
 //! This is a control function for Runge-Kutta evolution in tau
-int Evolve::AdvanceRK(double tau, InitData *DATA, Field *hydro_fields) {
+ int Evolve::AdvanceRK(double tau, Field *hydro_fields, double ***grid_array, double ***qi_array, double ***qi_array_new, double ***qi_rk0, double ***qi_nbr_x, double ***qi_nbr_y, double ***qi_nbr_eta, double ***vis_array, double ***vis_array_new, double ***vis_nbr_tau, double ***velocity_array, double ***vis_nbr_x, double ***vis_nbr_y, double ***vis_nbr_eta, double **grid_array_temp, double **rhs, double **qiphL, double **qiphR, double **qimhL, double **qimhR, double **grid_array_hL, double **grid_array_hR) {
     int flag = 0;
     // loop over Runge-Kutta steps
     for (int rk_flag = 0; rk_flag < rk_order; rk_flag++) {
-        flag = u_derivative->MakedU(tau, hydro_fields, rk_flag);
-        flag = advance->AdvanceIt(tau, hydro_fields, rk_flag);
+	      // flag = u_derivative->MakedU(tau, hydro_fields, rk_flag); // put back in for viscous case
+      flag = advance->AdvanceIt(tau, hydro_fields, rk_flag, grid_array, qi_array, qi_array_new, qi_rk0, qi_nbr_x, qi_nbr_y, qi_nbr_eta, vis_array, vis_array_new, vis_nbr_tau, velocity_array, vis_nbr_x, vis_nbr_y, vis_nbr_eta, grid_array_temp, rhs, qiphL, qiphR, qimhL, qimhR, grid_array_hL, grid_array_hR);
         if (rk_flag == 0) {
             update_prev_field(hydro_fields);
         }

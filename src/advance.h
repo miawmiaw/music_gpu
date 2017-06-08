@@ -34,7 +34,7 @@ class Advance {
     ~Advance();
     #pragma acc routine gang
     int AdvanceIt(double tau_init, Field *hydro_fields,
-                  int rk_flag);
+                  int rk_flag,double ***grid_array, double ***qi_array, double ***qi_array_new, double ***qi_rk0, double ***qi_nbr_x, double ***qi_nbr_y, double ***qi_nbr_eta, double ***vis_array, double ***vis_array_new, double ***vis_nbr_tau, double ***velocity_array, double ***vis_nbr_x, double ***vis_nbr_y, double ***vis_nbr_eta, double **grid_array_temp, double **rhs, double **qiphL, double **qiphR, double **qimhL, double **qimhR, double **grid_array_hL, double **grid_array_hR);
 #pragma acc routine seq
     double get_pressure(double e_local, double rhob);
 #pragma acc routine seq

@@ -358,25 +358,25 @@ void Advance::prepare_velocity_array(double tau_rk, Field *hydro_fields,
 
 // evolve Runge-Kutta step in tau
 int Advance::AdvanceIt(double tau, Field *hydro_fields,
-                       int rk_flag) {
+                       int rk_flag, double ***grid_array, double ***qi_array, double ***qi_array_new, double ***qi_rk0, double ***qi_nbr_x, double ***qi_nbr_y, double ***qi_nbr_eta, double ***vis_array, double ***vis_array_new, double ***vis_nbr_tau, double ***velocity_array, double ***vis_nbr_x, double ***vis_nbr_y, double ***vis_nbr_eta, double **grid_array_temp, double **rhs, double **qiphL, double **qiphR, double **qimhL, double **qimhR, double **grid_array_hL, double **grid_array_hR) {
     //const int cube_size=SUB_GRID_SIZE_X*SUB_GRID_SIZE_Y*SUB_GRID_SIZE_ETA;
     //const int neigh_sizex=4*SUB_GRID_SIZE_Y*SUB_GRID_SIZE_ETA;
     //const int neigh_sizey=4*SUB_GRID_SIZE_X*SUB_GRID_SIZE_ETA;
     //const int neigh_sizeeta=4*SUB_GRID_SIZE_X*SUB_GRID_SIZE_Y;
     double tmp[2]={-1.1, -2.2};
-    double grid_array[1][5], qi_array[1][5], qi_array_new[1][5], qi_rk0[1][5];
-    double qi_nbr_x[4][5], qi_nbr_y[4][5], qi_nbr_eta[4][5];
-    double vis_array[1][19], vis_array_new[1][19], vis_nbr_tau[1][19];
-    double velocity_array[1][20];
-    double vis_nbr_x[4][19], vis_nbr_y[4][19], vis_nbr_eta[4][19];
-    double grid_array_temp[5];
-    double rhs[5];
-    double qiphL[5];
-    double qiphR[5];
-    double qimhL[5];
-    double qimhR[5];
-    double grid_array_hL[5];
-    double grid_array_hR[5];
+    // double grid_array[1][5], qi_array[1][5], qi_array_new[1][5], qi_rk0[1][5];
+    // double qi_nbr_x[4][5], qi_nbr_y[4][5], qi_nbr_eta[4][5];
+    // double vis_array[1][19], vis_array_new[1][19], vis_nbr_tau[1][19];
+    // double velocity_array[1][20];
+    // double vis_nbr_x[4][19], vis_nbr_y[4][19], vis_nbr_eta[4][19];
+    // double grid_array_temp[5];
+    // double rhs[5];
+    // double qiphL[5];
+    // double qiphR[5];
+    // double qimhL[5];
+    // double qimhR[5];
+    // double grid_array_hL[5];
+    // double grid_array_hR[5];
     
     #pragma acc loop gang worker vector collapse(3) private(this[0:1], grid_array[0:1][0:5], \
                          qi_array[0:1][0:5], qi_array_new[0:1][0:5], qi_rk0[0:1][0:5], \
