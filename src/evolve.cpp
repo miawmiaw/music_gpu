@@ -8,6 +8,7 @@
 #include "./advance.h"
 #include "./cornelius.h"
 #include "./field.h"
+#include "./data_dump.h"
 
 using namespace std;
 
@@ -96,9 +97,18 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
     DATA->delta_y = DELTA_Y;
     DATA->delta_eta = DELTA_ETA;
     double tau;
+    //DataDump dat;
     //int it_start = 0;
     cout << "Pre data copy" << endl;
     #pragma acc data copyin (hydro_fields[0:1],\
+                         hydro_fields->e_rk0[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA],\
+                         hydro_fields->e_prev[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA],\
+                         hydro_fields->rhob_rk0[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA],\
+                         hydro_fields->e_rk1[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA],\
+                         hydro_fields->rhob_rk1[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA],\
+                         hydro_fields->rhob_prev[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA], \
+                         hydro_fields->u_rk0[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][0:4], \
+                         hydro_fields->u_rk1[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][0:4], \
                          hydro_fields->e_rk0[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA],\
                          hydro_fields->e_prev[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA],\
                          hydro_fields->rhob_rk0[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA],\
@@ -114,91 +124,134 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
                          hydro_fields->Wmunu_prev[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][0:14], \
                          hydro_fields->pi_b_rk0[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA], \
                          hydro_fields->pi_b_rk1[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA], \
-                         hydro_fields->pi_b_prev[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA])
+                         hydro_fields->pi_b_prev[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA], \
+                         hydro_fields->e_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA], \
+                         hydro_fields->rhob_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA], \
+                         hydro_fields->u_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][0:4], \
+                         hydro_fields->Wmunu_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][0:14], \
+                         hydro_fields->pi_b_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA])
     {
-    cout << "Post data copy" << endl;
+        cout << "Post data copy" << endl;
+        for (int oit = 0; oit <= itmax; oit += 10) {
+            
+            #pragma acc parallel loop gang worker vector async(1)
+            for (int x = 0; x < (GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; ++x){
+                hydro_fields->e_perm[x] = hydro_fields->e_rk0[x];
+                hydro_fields->rhob_perm[x] = hydro_fields->rhob_rk0[x];
+                hydro_fields->u_perm[x] = hydro_fields->u_rk0[x];
+                hydro_fields->Wmunu_perm[x] = hydro_fields->Wmunu_rk0[x];
+                hydro_fields->pi_b_perm[x] = hydro_fields->pi_b_rk0[x];
+            }
+            if (oit == 10){
+                #pragma acc update host(hydro_fields->e_rk0[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA])
+                for (int x = 0; x < (GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; ++x){
+                    cout << hydro_fields->e_rk0[x] << endl;
+                }
+            }
+            #pragma acc parallel async(2) wait(1)
+            for (int it = oit; it < oit + 10; ++it){
+                tau = tau0 + dt*it;
+                // store initial conditions
+                //if (it == it_start) {
+                //    store_previous_step_for_freezeout(arena);
+                //}
+
+                //convert_grid_to_field(arena, hydro_fields);
+/* 
+                if (DATA->Initial_profile == 0) {
+                    if (fabs(tau - 1.0) < 1e-8) {
+                        grid_info->Gubser_flow_check_file(hydro_fields, tau);
+                    }
+                    if (fabs(tau - 1.2) < 1e-8) {
+                        grid_info->Gubser_flow_check_file(hydro_fields, tau);
+                    }
+                    if (fabs(tau - 1.5) < 1e-8) {
+                        grid_info->Gubser_flow_check_file(hydro_fields, tau);
+                    }
+                    if (fabs(tau - 2.0) < 1e-8) {
+                        grid_info->Gubser_flow_check_file(hydro_fields, tau);
+                    }
+                    if (fabs(tau - 3.0) < 1e-8) {
+                        grid_info->Gubser_flow_check_file(hydro_fields, tau);
+                    }
+                }
+*/
+                //if (it % Nskip_timestep == 0) {
+                //    if (outputEvo_flag == 1) {
+                //        grid_info->OutputEvolutionDataXYEta(arena, DATA, tau);
+                //    } else if (outputEvo_flag == 2) {
+                //        grid_info->OutputEvolutionDataXYEta_chun(arena, DATA, tau);
+                //    }
+                //    if (output_movie_flag == 1) {
+                //        grid_info->output_evolution_for_movie(arena, tau);
+                //    }
+                //}
+                // grid_info->output_average_phase_diagram_trajectory(tau, -0.5, 0.5,
+                //                                                    arena);
+
+                // check energy conservation
+                //if (boost_invariant_flag == 0)
+                //    grid_info->check_conservation_law(hydro_fields, DATA, tau);
+                //grid_info->get_maximum_energy_density(hydro_fields);
+
+                /* execute rk steps */
+                // all the evolution are at here !!!
+                AdvanceRK(tau, DATA, hydro_fields);
+                //copy_fields_to_grid(hydro_fields, arena);
+            
+                //determine freeze-out surface
+                //int frozen = 0;
+                //if (freezeout_flag == 1) {
+                //    if (freezeout_lowtemp_flag == 1) {
+                //        if (it == it_start) {
+                //            frozen = FreezeOut_equal_tau_Surface(tau, DATA, arena);
+                //        }
+                //    }
+                //    // avoid freeze-out at the first time step
+                //    if ((it - it_start)%facTau == 0 && it > it_start) {
+                //       if (freezeout_method == 4) {
+                //           if (boost_invariant_flag == 0) {
+                //               frozen = FindFreezeOutSurface_Cornelius(tau, DATA,
+                //                                                       arena);
+                //           } else {
+                //               frozen = FindFreezeOutSurface_boostinvariant_Cornelius(
+                //                                                    tau, DATA, arena);
+                //           }
+                //       }
+                //       store_previous_step_for_freezeout(arena);
+                //    }
+                //}/* do freeze-out determination */
     
-    for (int it = 0; it <= itmax; it++) {
-        tau = tau0 + dt*it;
-        // store initial conditions
-        //if (it == it_start) {
-        //    store_previous_step_for_freezeout(arena);
-        //}
+                //fprintf(stdout, "Done time step %d/%d. tau = %6.3f fm/c \n", 
+                //        it, itmax, tau);
+                //if (frozen) break;
+            }/* it */ 
+            #pragma acc update host(hydro_fields->e_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA], \
+                                    hydro_fields->rhob_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA], \
+                                    hydro_fields->u_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][0:4], \
+                                    hydro_fields->Wmunu_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][0:14], \
+                                    hydro_fields->pi_b_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA]) async(1)
 
-        //convert_grid_to_field(arena, hydro_fields);
-        
-        if (DATA->Initial_profile == 0) {
-            if (fabs(tau - 1.0) < 1e-8) {
-                grid_info->Gubser_flow_check_file(hydro_fields, tau);
+
+            #pragma acc wait(1)
+            dat.e[(oit/10)-1]=hydro_fields->e_perm;
+            dat.rhob[(oit/10)-1]=hydro_fields->rhob_perm;
+            dat.u[(oit/10)-1]=hydro_fields->u_perm;
+            dat.Wmunu[(oit/10)-1]=hydro_fields->Wmunu_perm;
+            dat.pi_b[(oit/10)-1]=hydro_fields->pi_b_perm;
+            hydro_fields->e_perm = new double[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+            hydro_fields->rhob_perm = new double[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+            hydro_fields->u_perm = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+            hydro_fields->Wmunu_perm = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+            hydro_fields->pi_b_perm = new double[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+            for (int x = 0; x < (GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; ++x){
+                hydro_fields->u_perm[x] = new double[4];
             }
-            if (fabs(tau - 1.2) < 1e-8) {
-                grid_info->Gubser_flow_check_file(hydro_fields, tau);
+            for (int x = 0; x < (GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; ++x){
+                hydro_fields->Wmunu_perm[x] = new double[14];
             }
-            if (fabs(tau - 1.5) < 1e-8) {
-                grid_info->Gubser_flow_check_file(hydro_fields, tau);
-            }
-            if (fabs(tau - 2.0) < 1e-8) {
-                grid_info->Gubser_flow_check_file(hydro_fields, tau);
-            }
-            if (fabs(tau - 3.0) < 1e-8) {
-                grid_info->Gubser_flow_check_file(hydro_fields, tau);
-            }
+            
         }
-
-        //if (it % Nskip_timestep == 0) {
-        //    if (outputEvo_flag == 1) {
-        //        grid_info->OutputEvolutionDataXYEta(arena, DATA, tau);
-        //    } else if (outputEvo_flag == 2) {
-        //        grid_info->OutputEvolutionDataXYEta_chun(arena, DATA, tau);
-        //    }
-        //    if (output_movie_flag == 1) {
-        //        grid_info->output_evolution_for_movie(arena, tau);
-        //    }
-        //}
-        // grid_info->output_average_phase_diagram_trajectory(tau, -0.5, 0.5,
-        //                                                    arena);
-
-        // check energy conservation
-        //if (boost_invariant_flag == 0)
-        //    grid_info->check_conservation_law(hydro_fields, DATA, tau);
-        //grid_info->get_maximum_energy_density(hydro_fields);
-
-        /* execute rk steps */
-        // all the evolution are at here !!!
-        AdvanceRK(tau, DATA, hydro_fields);
-        #pragma acc update host(hydro_fields->e_rk0[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA])
-        for (int x = 0; x < (GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; x += 100){
-            cout << hydro_fields->e_rk0[x] << endl;
-        }
-        //copy_fields_to_grid(hydro_fields, arena);
-        
-        //determine freeze-out surface
-        //int frozen = 0;
-        //if (freezeout_flag == 1) {
-        //    if (freezeout_lowtemp_flag == 1) {
-        //        if (it == it_start) {
-        //            frozen = FreezeOut_equal_tau_Surface(tau, DATA, arena);
-        //        }
-        //    }
-        //    // avoid freeze-out at the first time step
-        //    if ((it - it_start)%facTau == 0 && it > it_start) {
-        //       if (freezeout_method == 4) {
-        //           if (boost_invariant_flag == 0) {
-        //               frozen = FindFreezeOutSurface_Cornelius(tau, DATA,
-        //                                                       arena);
-        //           } else {
-        //               frozen = FindFreezeOutSurface_boostinvariant_Cornelius(
-        //                                                    tau, DATA, arena);
-        //           }
-        //       }
-        //       store_previous_step_for_freezeout(arena);
-        //    }
-        //}/* do freeze-out determination */
-    
-        fprintf(stdout, "Done time step %d/%d. tau = %6.3f fm/c \n", 
-                it, itmax, tau);
-        //if (frozen) break;
-    }/* it */ 
     }
 }
 
@@ -280,6 +333,7 @@ void Evolve::Update_prev_Arena_XY(int ieta, Grid ***arena) {
         }
     }
 }
+
 
 void Evolve::update_prev_field(Field *hydro_fields) {
     int n_cell = DATA_ptr->neta*(DATA_ptr->nx + 1)*(DATA_ptr->ny + 1);

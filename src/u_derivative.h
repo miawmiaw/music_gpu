@@ -7,6 +7,7 @@
 #include "field.h"
 #include <string.h>
 #include <iostream>
+#include <cmath>
 
 class U_derivative {
  private:
@@ -19,6 +20,7 @@ class U_derivative {
     // Sangyong Nov 18 2014: added EOS *eos in the argument
     U_derivative(EOS *eosIn, InitData* DATA_in);  // constructor
     ~U_derivative();
+    #pragma acc routine gang
     int MakedU(double tau, Field *hydro_fields, int rk_flag);
     void MakedUXY(double tau, int ieta, InitData *DATA,
                   Grid ***arena, int rk_flag);
@@ -45,8 +47,10 @@ class U_derivative {
                     double tau, Field *hydro_fields, int idx, int rk_flag,
                     double *velocity_array);
     int MakeDSpatial(double tau, InitData *DATA, Grid *grid_pt, int rk_flag);
+    #pragma acc routine vector
     int MakeDSpatial_1(double tau, Field *hydro_fields, int ieta, int ix, int iy, int rk_flag);
     int MakeDTau(double tau, InitData *DATA, Grid *grid_pt, int rk_flag);
+    #pragma acc routine vector
     int MakeDTau_1(double tau, Field *hydro_fields, int ieta, int ix, int iy, int rk_flag);
 };
 #endif

@@ -32,7 +32,7 @@ class Advance {
  public:
     Advance(EOS *eosIn, InitData* DATA_in);
     ~Advance();
-
+    #pragma acc routine gang
     int AdvanceIt(double tau_init, Field *hydro_fields,
                   int rk_flag);
 #pragma acc routine seq

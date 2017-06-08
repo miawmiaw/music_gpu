@@ -5,6 +5,7 @@
 #include "./minmod.h"
 #include "./eos.h"
 #include "./u_derivative.h"
+#include <cmath>
 
 using namespace std;
 
@@ -18,6 +19,25 @@ U_derivative::U_derivative(EOS *eosIn, InitData* DATA_in) {
 U_derivative::~U_derivative() {
    delete minmod;
 }
+#pragma acc routine seq
+double minmod_dx(double up1, double u, double um1) {
+    double theta_flux = 1.8;
+    double diffup = (up1 - u)*theta_flux;
+    double diffdown = (u - um1)*theta_flux;
+    double diffmid = (up1 - um1)*0.5;
+
+    double tempf;
+    if ( (diffup > 0.0) && (diffdown > 0.0) && (diffmid > 0.0) ) {
+        tempf = mini(diffdown, diffmid);
+        return mini(diffup, tempf);
+    } else if ( (diffup < 0.0) && (diffdown < 0.0) && (diffmid < 0.0) ) {
+        tempf = maxi(diffdown, diffmid);
+        return maxi(diffup, tempf);
+    } else {
+      return 0.0;
+    }
+}/* minmod_dx */
+
 
 int U_derivative::MakedU(double tau, Field *hydro_fields, int rk_flag) {
     // ideal hydro: no need to evaluate any flow derivatives
@@ -28,24 +48,18 @@ int U_derivative::MakedU(double tau, Field *hydro_fields, int rk_flag) {
     int neta = DATA_ptr->neta;
     int nx = DATA_ptr->nx + 1;
     int ny = DATA_ptr->ny + 1;
-    int ieta;
-    #pragma omp parallel private(ieta)
-    {
-        #pragma omp for
-        for (ieta = 0; ieta < neta; ieta++) {
-            for (int ix = 0; ix < nx; ix++) {
-                for (int iy = 0; iy < ny; iy++) {
-	               /* this calculates du/dx, du/dy, (du/deta)/tau */
-                   MakeDSpatial_1(tau, hydro_fields, ieta, ix, iy, rk_flag);
-                   /* this calculates du/dtau */
-                   MakeDTau_1(tau, hydro_fields, ieta, ix, iy, rk_flag); 
-                }
+    #pragma acc loop collapse(3) gang worker
+    for (int ieta = 0; ieta < neta; ieta++) {
+        for (int ix = 0; ix < nx; ix++) {
+            for (int iy = 0; iy < ny; iy++) {
+                /* this calculates du/dx, du/dy, (du/deta)/tau */
+                MakeDSpatial_1(tau, hydro_fields, ieta, ix, iy, rk_flag);
+                /* this calculates du/dtau */
+                MakeDTau_1(tau, hydro_fields, ieta, ix, iy, rk_flag); 
             }
         }
-        #pragma omp barrier
     }
-
-   return(1);
+    return(1);
 }
 
 //! this function returns the expansion rate on the grid
@@ -320,7 +334,19 @@ void U_derivative::calculate_velocity_shear_tensor_2(
     velocity_array[6] = ((velocity_array[7]*u1 + velocity_array[8]*u2
                           + velocity_array[9]*u3)/u0);
 }
+#pragma acc routine seq
+double get_temperature(double eps, double rhob) {
+    double Nc = 3;
+    double Nf = 2.5;
+    double res = 90.0/M_PI/M_PI*(eps/3.0)/(2*(Nc*Nc-1)+7./2*Nc*Nf);
+    return(pow(res, 0.25));
+}
 
+#pragma acc routine seq
+double get_mu(double eps, double rhob) {
+    double mu = 0.0;
+    return mu;
+}
 
 int U_derivative::MakeDSpatial(double tau, InitData *DATA, Grid *grid_pt,
                                int rk_flag) {
@@ -344,7 +370,7 @@ int U_derivative::MakeDSpatial(double tau, InitData *DATA, Grid *grid_pt,
             f = grid_pt->u[rk_flag][m];
             fp1 = grid_pt->nbr_p_1[n]->u[rk_flag][m];
             fm1 = grid_pt->nbr_m_1[n]->u[rk_flag][m];
-            g = minmod->minmod_dx(fp1, f, fm1);
+            g = minmod_dx(fp1, f, fm1);
             g /= delta[n]*taufactor;
             grid_pt->dUsup[0][m][n] = g;
         }  // n = x, y, eta
@@ -407,7 +433,7 @@ int U_derivative::MakeDSpatial(double tau, InitData *DATA, Grid *grid_pt,
         T = eos->get_temperature(eps, rhob);
         fm1 = muB/T; 
 
-        g = minmod->minmod_dx(fp1, f, fm1);
+        g = minmod_dx(fp1, f, fm1);
         g /= delta[n]*taufactor;
         grid_pt->dUsup[0][m][n] = g;
     }  // n = x, y, eta
@@ -427,6 +453,7 @@ int U_derivative::MakeDSpatial_1(double tau, Field *hydro_fields, int ieta, int 
     int idx_p_1, idx_m_1;
     // dUsup[m][n] = partial_n u_m
     // for u[i]
+    #pragma acc loop collapse(2) vector
     for (int m = 1; m < 5; m++) {
         for (int n = 1; n < 4; n++) {
             if (n == 1) {
@@ -480,15 +507,13 @@ int U_derivative::MakeDSpatial_1(double tau, Field *hydro_fields, int ieta, int 
                 } else if (m == 4) {
                     rhob = hydro_fields->rhob_rk0[idx];
                     eps = hydro_fields->e_rk0[idx];
-                    f = eos->get_mu(eps, rhob)/eos->get_temperature(eps, rhob);
+                    f = get_mu(eps, rhob)/get_temperature(eps, rhob);
                     rhob = hydro_fields->rhob_rk0[idx_p_1];
                     eps = hydro_fields->e_rk0[idx_p_1];
-                    fp1 = (eos->get_mu(eps, rhob)
-                            /eos->get_temperature(eps, rhob));
+                    fp1 = (get_mu(eps, rhob)/get_temperature(eps, rhob));
                     rhob = hydro_fields->rhob_rk0[idx_m_1];
                     eps = hydro_fields->e_rk0[idx_m_1];
-                    fm1 = (eos->get_mu(eps, rhob)
-                            /eos->get_temperature(eps, rhob));
+                    fm1 = (get_mu(eps, rhob)/get_temperature(eps, rhob));
                 }
             } else {
                 if (m < 4) {
@@ -498,18 +523,16 @@ int U_derivative::MakeDSpatial_1(double tau, Field *hydro_fields, int ieta, int 
                 } else if (m == 4) {
                     rhob = hydro_fields->rhob_rk1[idx];
                     eps = hydro_fields->e_rk1[idx];
-                    f = eos->get_mu(eps, rhob)/eos->get_temperature(eps, rhob);
+                    f = get_mu(eps, rhob)/get_temperature(eps, rhob);
                     rhob = hydro_fields->rhob_rk1[idx_p_1];
                     eps = hydro_fields->e_rk1[idx_p_1];
-                    fp1 = (eos->get_mu(eps, rhob)
-                             /eos->get_temperature(eps, rhob));
+                    fp1 = (get_mu(eps, rhob)/get_temperature(eps, rhob));
                     rhob = hydro_fields->rhob_rk1[idx_m_1];
                     eps = hydro_fields->e_rk1[idx_m_1];
-                    fm1 = (eos->get_mu(eps, rhob)
-                            /eos->get_temperature(eps, rhob));
+                    fm1 = (get_mu(eps, rhob)/get_temperature(eps, rhob));
                 }
             }
-            hydro_fields->dUsup[idx][4*m+n] = (minmod->minmod_dx(fp1, f, fm1)
+            hydro_fields->dUsup[idx][4*m+n] = (minmod_dx(fp1, f, fm1)
                                                /(deltafactor*taufactor));
         }
     }
@@ -590,14 +613,14 @@ int U_derivative::MakeDTau(double tau, InitData *DATA, Grid *grid_pt,
         // f = (grid_pt->rhob);
         rhob = grid_pt->rhob;
         eps = grid_pt->epsilon;
-        muB = eos->get_mu(eps, rhob);
-        T = eos->get_temperature(eps, rhob);
+        muB = get_mu(eps, rhob);
+        T = get_temperature(eps, rhob);
         tildemu = muB/T;
         // f -= (grid_pt->rhob_prev);
         rhob = grid_pt->prev_rhob;
         eps = grid_pt->prev_epsilon;
-        muB = eos->get_mu(eps, rhob);
-        T = eos->get_temperature(eps, rhob);
+        muB = get_mu(eps, rhob);
+        T = get_temperature(eps, rhob);
         tildemu_prev = muB/T;
         f = (tildemu - tildemu_prev)/(DATA->delta_tau);
         grid_pt->dUsup[0][m][0] = -f; /* g00 = -1 */
@@ -610,14 +633,14 @@ int U_derivative::MakeDTau(double tau, InitData *DATA, Grid *grid_pt,
         // f /= (DATA->delta_tau);
         rhob = grid_pt->rhob_t;
         eps = grid_pt->epsilon_t;
-        muB = eos->get_mu(eps, rhob);
-        T = eos->get_temperature(eps, rhob);
+        muB = get_mu(eps, rhob);
+        T = get_temperature(eps, rhob);
         tildemu = muB/T;
         // f -= (grid_pt->rhob_prev);
         rhob = grid_pt->rhob;
         eps = grid_pt->epsilon;
-        muB = eos->get_mu(eps, rhob);
-        T = eos->get_temperature(eps, rhob);
+        muB = get_mu(eps, rhob);
+        T = get_temperature(eps, rhob);
         tildemu_prev = muB/T;
         f = (tildemu - tildemu_prev)/(DATA->delta_tau);
         grid_pt->dUsup[0][m][0] = -f; /* g00 = -1 */
@@ -676,19 +699,19 @@ int U_derivative::MakeDTau_1(double tau, Field *hydro_fields, int ieta, int ix, 
     if (rk_flag == 0) {
         rhob = hydro_fields->rhob_rk0[idx];
         eps = hydro_fields->e_rk0[idx];
-        tildemu = eos->get_mu(eps, rhob)/eos->get_temperature(eps, rhob);
+        tildemu = get_mu(eps, rhob)/get_temperature(eps, rhob);
         rhob = hydro_fields->rhob_prev[idx];
         eps = hydro_fields->e_prev[idx];
-        tildemu_prev = eos->get_mu(eps, rhob)/eos->get_temperature(eps, rhob);
+        tildemu_prev = get_mu(eps, rhob)/get_temperature(eps, rhob);
         f = (tildemu - tildemu_prev)/(DATA_ptr->delta_tau);
         hydro_fields->dUsup[0][16] = -f;   // g00 = -1
     } else if (rk_flag > 0) {
         rhob = hydro_fields->rhob_rk1[idx];
         eps = hydro_fields->e_rk1[idx];
-        tildemu = eos->get_mu(eps, rhob)/eos->get_temperature(eps, rhob);
+        tildemu = get_mu(eps, rhob)/get_temperature(eps, rhob);
         rhob = hydro_fields->rhob_rk0[idx];
         eps = hydro_fields->e_rk0[idx];
-        tildemu_prev = eos->get_mu(eps, rhob)/eos->get_temperature(eps, rhob);
+        tildemu_prev = get_mu(eps, rhob)/get_temperature(eps, rhob);
         f = (tildemu - tildemu_prev)/(DATA_ptr->delta_tau);
         hydro_fields->dUsup[0][16] = -f;   // g00 = -1
     }
