@@ -8,6 +8,7 @@
 #include "./advance.h"
 #include "./cornelius.h"
 #include "./field.h"
+#include "./Stopwatch.h"
 
 using namespace std;
 
@@ -184,6 +185,8 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
     DATA->delta_eta = DELTA_ETA;
     double tau;
     //int it_start = 0;
+    Stopwatch watch;
+    watch.tic();
     cout << "Pre data copy" << endl;
     #pragma acc data copyin (hydro_fields[0:1],\
                          hydro_fields->e_rk0[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA],\
@@ -204,6 +207,8 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
                          hydro_fields->pi_b_prev[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA])
     {
     cout << "Post data copy" << endl;
+    watch.toc();
+    cout << "took " << watch.takeTime() << " sec." << endl;
     
     for (int it = 0; it <= itmax; it++) {
         tau = tau0 + dt*it;
