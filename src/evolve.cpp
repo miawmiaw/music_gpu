@@ -8,6 +8,7 @@
 #include "./cornelius.h"
 #include "./field.h"
 #include "./data_dump.h"
+#include <unistd.h>
 
 using namespace std;
 
@@ -111,7 +112,7 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
     	grid_array[idx] = new double *[1];
     	for (int idy=0; idy<1; idy++)
     	  {
-    	    grid_array[idx][1] = new double[5];
+    	    grid_array[idx][idy] = new double[5];
     	  }
       }
 
@@ -122,7 +123,7 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
     	qi_array_new[idx] = new double *[1];
     	for (int idy=0; idy<1; idy++)
     	  {
-    	    qi_array_new[idx][1] = new double[5];
+    	    qi_array_new[idx][idy] = new double[5];
     	  }
       }
 
@@ -133,7 +134,7 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
     	qi_rk0[idx] = new double *[1];
     	for (int idy=0; idy<1; idy++)
     	  {
-    	    qi_rk0[idx][1] = new double[5];
+    	    qi_rk0[idx][idy] = new double[5];
     	  }
       }
 
@@ -144,7 +145,7 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
     	qi_array_rk0[idx] = new double *[1];
     	for (int idy=0; idy<1; idy++)
     	  {
-    	    qi_array_rk0[idx][1] = new double[5];
+    	    qi_array_rk0[idx][idy] = new double[5];
     	  }
       }
 
@@ -155,7 +156,7 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
     	qi_array[idx] = new double *[1];
     	for (int idy=0; idy<1; idy++)
     	  {
-    	    qi_array[idx][1] = new double[5];
+    	    qi_array[idx][idy] = new double[5];
     	  }
       }
 
@@ -166,7 +167,7 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
     	qi_nbr_x[idx] = new double *[4];
     	for (int idy=0; idy<4; idy++)
     	  {
-    	    qi_nbr_x[idx][1] = new double[5];
+    	    qi_nbr_x[idx][idy] = new double[5];
     	  }
       }
 
@@ -177,7 +178,7 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
     	qi_nbr_y[idx] = new double *[4];
     	for (int idy=0; idy<4; idy++)
     	  {
-    	    qi_nbr_y[idx][1] = new double[5];
+    	    qi_nbr_y[idx][idy] = new double[5];
     	  }
       }
 
@@ -188,7 +189,7 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
     	qi_nbr_eta[idx] = new double *[4];
     	for (int idy=0; idy<4; idy++)
     	  {
-    	    qi_nbr_eta[idx][1] = new double[5];
+    	    qi_nbr_eta[idx][idy] = new double[5];
     	  }
       }
 
@@ -199,7 +200,7 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
     	vis_array[idx] = new double *[1];
     	for (int idy=0; idy<1; idy++)
     	  {
-    	    vis_array[idx][1] = new double[19];
+    	    vis_array[idx][idy] = new double[19];
     	  }
       }
 
@@ -210,7 +211,7 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
     	vis_array_new[idx] = new double *[1];
     	for (int idy=0; idy<1; idy++)
     	  {
-    	    vis_array_new[idx][1] = new double[19];
+    	    vis_array_new[idx][idy] = new double[19];
     	  }
       }
 
@@ -221,7 +222,7 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
     	vis_nbr_tau[idx] = new double *[1];
     	for (int idy=0; idy<1; idy++)
     	  {
-    	    vis_nbr_tau[idx][1] = new double[19];
+    	    vis_nbr_tau[idx][idy] = new double[19];
     	  }
       }
 
@@ -232,7 +233,7 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
     	velocity_array[idx] = new double *[1];
     	for (int idy=0; idy<1; idy++)
     	  {
-    	    velocity_array[idx][1] = new double[20];
+    	    velocity_array[idx][idy] = new double[20];
     	  }
       }
 
@@ -243,7 +244,7 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
     	vis_nbr_x[idx] = new double *[4];
     	for (int idy=0; idy<4; idy++)
     	  {
-    	    vis_nbr_x[idx][1] = new double[19];
+    	    vis_nbr_x[idx][idy] = new double[19];
     	  }
       }
 
@@ -254,7 +255,7 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
     	vis_nbr_y[idx] = new double *[4];
     	for (int idy=0; idy<4; idy++)
     	  {
-    	    vis_nbr_y[idx][1] = new double[19];
+    	    vis_nbr_y[idx][idy] = new double[19];
     	  }
       }
 
@@ -265,7 +266,7 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
     	vis_nbr_eta[idx] = new double *[4];
     	for (int idy=0; idy<4; idy++)
     	  {
-    	    vis_nbr_eta[idx][1] = new double[19];
+    	    vis_nbr_eta[idx][idy] = new double[19];
     	  }
       }
 
@@ -301,14 +302,14 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
     //qimhL = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-    	qiphL[idx] = new double [5];
+    	qimhL[idx] = new double [5];
       }
 
     double **qimhR = new double*[GRID_SIZE];
     //qimhR = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-    	qiphR[idx] = new double [5];
+    	qimhR[idx] = new double [5];
       }
 
     double **grid_array_hL = new double*[GRID_SIZE];
@@ -383,9 +384,10 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
 			grid_array_hL[0:GRID_SIZE][0:5],\
 			grid_array_hR[0:GRID_SIZE][0:5])
     {
+        cout << "Post data copy 2" << endl;
 
         for (int oit = 0; oit <= itmax; oit += 10) {
-            
+             
             #pragma acc parallel loop gang worker vector async(1)
             for (int x = 0; x < (GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; ++x){
                 hydro_fields->e_perm[x] = hydro_fields->e_rk0[x];
@@ -394,12 +396,14 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
                 hydro_fields->Wmunu_perm[x] = hydro_fields->Wmunu_rk0[x];
                 hydro_fields->pi_b_perm[x] = hydro_fields->pi_b_rk0[x];
             }
-              #pragma acc update host(hydro_fields->e_rk0[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA])
+//              #pragma acc update host(hydro_fields->e_rk0[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA])
 		//                for (int x = 0; x < (GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; ++x){
-		for (int x = 0; x < 1; x++){
-		  cout << oit << " " << hydro_fields->e_rk0[x] << endl;
-                }
-            #pragma acc parallel async(2) wait(1)
+//		for (int x = 0; x < 1; x++){
+//		  cout << oit << " " << hydro_fields->e_rk0[x] << endl;
+//                }
+ 
+//            #pragma acc parallel async(2) wait(1)
+            #pragma acc wait(1)
             for (int it = oit; it < oit + 10; ++it){
                 tau = tau0 + dt*it;
                 // store initial conditions
@@ -447,7 +451,10 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
 
                 /* execute rk steps */
                 // all the evolution are at here !!!
+                {
        	        AdvanceRK(tau, hydro_fields, grid_array, qi_array, qi_array_new, qi_rk0, qi_nbr_x, qi_nbr_y, qi_nbr_eta, vis_array, vis_array_new, vis_nbr_tau, velocity_array, vis_nbr_x, vis_nbr_y, vis_nbr_eta, grid_array_temp, rhs, qiphL, qiphR, qimhL, qimhR, grid_array_hL, grid_array_hR);
+                }
+                //sleep(10);
                 //copy_fields_to_grid(hydro_fields, arena);
             
                 //determine freeze-out surface
@@ -476,7 +483,8 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
                 //fprintf(stdout, "Done time step %d/%d. tau = %6.3f fm/c \n", 
                 //        it, itmax, tau);
                 //if (frozen) break;
-            }/* it */ 
+            }/* it */  
+            cout << "Pre update host" << endl;
             #pragma acc update host(hydro_fields->e_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA], \
                                     hydro_fields->rhob_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA], \
                                     hydro_fields->u_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][0:4], \
@@ -485,22 +493,27 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
 
 
             #pragma acc wait(1)
-            dat.e[(oit/10)]=hydro_fields->e_perm;
-            dat.rhob[(oit/10)]=hydro_fields->rhob_perm;
-            dat.u[(oit/10)]=hydro_fields->u_perm;
-            dat.Wmunu[(oit/10)]=hydro_fields->Wmunu_perm;
-            dat.pi_b[(oit/10)]=hydro_fields->pi_b_perm;
-            hydro_fields->e_perm = new double[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
-            hydro_fields->rhob_perm = new double[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
-            hydro_fields->u_perm = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
-            hydro_fields->Wmunu_perm = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
-            hydro_fields->pi_b_perm = new double[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
-            for (int x = 0; x < (GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; ++x){
-                hydro_fields->u_perm[x] = new double[4];
+            cout << "After update host" << endl;
+            dat.e[oit/10] = new double[GRID_SIZE];
+            dat.rhob[oit/10] = new double[GRID_SIZE];
+            dat.u[oit/10] = new double*[GRID_SIZE];
+            dat.Wmunu[oit/10] = new double*[GRID_SIZE];
+            dat.pi_b[oit/10] = new double[GRID_SIZE];
+            cout << "Pre data move" << endl;
+            for (int x = 0; x < GRID_SIZE; ++x){
+                dat.u[oit/10][x] = new double[4];
+                dat.Wmunu[oit/10][x] = new double[14];
+                dat.e[oit/10][x] = hydro_fields->e_perm[x];
+                dat.rhob[oit/10][x] = hydro_fields->rhob_perm[x];
+                dat.pi_b[oit/10][x] = hydro_fields->pi_b_perm[x];
+                for (int y = 0; y < 4; ++y){
+                    dat.u[oit/10][x][y] = hydro_fields->u_perm[x][y];
+                }
+                for (int y = 0; y < 14; ++y){
+                    dat.Wmunu[oit/10][x][y] = hydro_fields->Wmunu_perm[x][y];
+                }
             }
-            for (int x = 0; x < (GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; ++x){
-                hydro_fields->Wmunu_perm[x] = new double[14];
-            }
+            cout << "After data move" << endl;
             }
         }
     }
@@ -588,6 +601,7 @@ void Evolve::Update_prev_Arena_XY(int ieta, Grid ***arena) {
 
 void Evolve::update_prev_field(Field *hydro_fields) {
     int n_cell = DATA_ptr->neta*(DATA_ptr->nx + 1)*(DATA_ptr->ny + 1);
+    #pragma acc parallel num_gangs(8) num_workers(16) vector_length(32) loop gang worker vector independent present(hydro_fields) async(2)
     for (int i = 0; i < n_cell; i++) {
         hydro_fields->e_prev[i] = hydro_fields->e_rk0[i];
         hydro_fields->rhob_prev[i] = hydro_fields->rhob_rk0[i];
@@ -672,14 +686,19 @@ void Evolve::convert_grid_to_field(Grid ***arena, Field *hydro_fields) {
 //! This is a control function for Runge-Kutta evolution in tau
  int Evolve::AdvanceRK(double tau, Field *hydro_fields, double ***grid_array, double ***qi_array, double ***qi_array_new, double ***qi_rk0, double ***qi_nbr_x, double ***qi_nbr_y, double ***qi_nbr_eta, double ***vis_array, double ***vis_array_new, double ***vis_nbr_tau, double ***velocity_array, double ***vis_nbr_x, double ***vis_nbr_y, double ***vis_nbr_eta, double **grid_array_temp, double **rhs, double **qiphL, double **qiphR, double **qimhL, double **qimhR, double **grid_array_hL, double **grid_array_hR) {
     int flag = 0;
+    cout << "AdvanceRK Start" << endl;
     // loop over Runge-Kutta steps
     for (int rk_flag = 0; rk_flag < rk_order; rk_flag++) {
+        cout << "Pre advance" << endl;
 	      // flag = u_derivative->MakedU(tau, hydro_fields, rk_flag); // put back in for viscous case
       flag = advance->AdvanceIt(tau, hydro_fields, rk_flag, grid_array, qi_array, qi_array_new, qi_rk0, qi_nbr_x, qi_nbr_y, qi_nbr_eta, vis_array, vis_array_new, vis_nbr_tau, velocity_array, vis_nbr_x, vis_nbr_y, vis_nbr_eta, grid_array_temp, rhs, qiphL, qiphR, qimhL, qimhR, grid_array_hL, grid_array_hR);
+        cout << "After advance" << endl;
         if (rk_flag == 0) {
             update_prev_field(hydro_fields);
         }
+        cout << "After update" << endl;
     }  /* loop over rk_flag */
+    cout << "AdvanceRK End" << endl;
     return(flag);
 }
 
