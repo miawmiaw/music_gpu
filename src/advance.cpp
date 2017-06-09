@@ -34,6 +34,207 @@ Advance::~Advance() {
     delete u_derivative_ptr;
 }
 
+//    int n_cell = DATA_ptr->neta*(DATA_ptr->nx + 1)*(DATA_ptr->ny + 1);
+//    #pragma acc parallel num_gangs(8) num_workers(16) vector_length(32) loop gang worker vector independent present(hydro_fields) async(2)
+//    for (int i = 0; i < n_cell; i++) {
+//    }
+
+//}
+
+
+int Advance::MakeDSpatial_1(double tau, Field *hydro_fields, int ieta, int ix, int iy,
+                                 int rk_flag) {
+    int nx = GRID_SIZE_X + 1;
+    int ny = GRID_SIZE_Y + 1;
+    int neta = GRID_SIZE_ETA;
+    
+    int idx = iy + ix*ny + ieta*ny*nx;
+
+    double f, fp1, fm1, taufactor, deltafactor;
+    double rhob, eps;
+    int idx_p_1, idx_m_1;
+    // dUsup[m][n] = partial_n u_m
+    // for u[i]
+    #pragma acc loop collapse(2) vector
+    for (int m = 1; m < 5; m++) {
+        for (int n = 1; n < 4; n++) {
+            if (n == 1) {
+                // compute partial_x u[m]
+                if (ix + 1 > nx - 1) {
+                    idx_p_1 = idx;
+                } else {
+                    idx_p_1 = idx + ny;
+                }
+                if (ix - 1 < 0) {
+                    idx_m_1 = idx;
+                } else {
+                    idx_m_1 = idx - ny;
+                }
+                taufactor = 1.0;
+                deltafactor = DELTA_X;
+            } else if (n == 2) {
+                // compute partial_y u[m]
+                if (iy + 1 > ny - 1) {
+                    idx_p_1 = idx;
+                } else {
+                    idx_p_1 = idx + 1;
+                }
+                if (iy - 1 < 0) {
+                    idx_m_1 = idx;
+                } else {
+                    idx_m_1 = idx - 1;
+                }
+                taufactor = 1.0;
+                deltafactor = DELTA_Y;
+            } else if (n == 3) {
+                // compute partial_eta u[m]
+                if (ieta + 1 > neta - 1) {
+                    idx_p_1 = idx;
+                } else {
+                    idx_p_1 = idx + ny*nx;
+                }
+                if (ieta - 1 < 0) {
+                    idx_m_1 = idx;
+                } else {
+                    idx_m_1 = idx - ny*nx;
+                }
+                taufactor = tau;
+                deltafactor = DELTA_ETA;
+            }
+            if (rk_flag == 0) {
+                if (m < 4) {
+                    f = hydro_fields->u_rk0[idx][m];
+                    fp1 = hydro_fields->u_rk0[idx_p_1][m];
+                    fm1 = hydro_fields->u_rk0[idx_m_1][m];
+                } else if (m == 4) {
+                    rhob = hydro_fields->rhob_rk0[idx];
+                    eps = hydro_fields->e_rk0[idx];
+                    f = get_mu(eps, rhob)/get_temperature(eps, rhob);
+                    rhob = hydro_fields->rhob_rk0[idx_p_1];
+                    eps = hydro_fields->e_rk0[idx_p_1];
+                    fp1 = (get_mu(eps, rhob)/get_temperature(eps, rhob));
+                    rhob = hydro_fields->rhob_rk0[idx_m_1];
+                    eps = hydro_fields->e_rk0[idx_m_1];
+                    fm1 = (get_mu(eps, rhob)/get_temperature(eps, rhob));
+                }
+            } else {
+                if (m < 4) {
+                    f = hydro_fields->u_rk1[idx][m];
+                    fp1 = hydro_fields->u_rk1[idx_p_1][m];
+                    fm1 = hydro_fields->u_rk1[idx_m_1][m];
+                } else if (m == 4) {
+                    rhob = hydro_fields->rhob_rk1[idx];
+                    eps = hydro_fields->e_rk1[idx];
+                    f = get_mu(eps, rhob)/get_temperature(eps, rhob);
+                    rhob = hydro_fields->rhob_rk1[idx_p_1];
+                    eps = hydro_fields->e_rk1[idx_p_1];
+                    fp1 = (get_mu(eps, rhob)/get_temperature(eps, rhob));
+                    rhob = hydro_fields->rhob_rk1[idx_m_1];
+                    eps = hydro_fields->e_rk1[idx_m_1];
+                    fm1 = (get_mu(eps, rhob)/get_temperature(eps, rhob));
+                }
+            }
+            hydro_fields->dUsup[idx][4*m+n] = (minmod_dx(fp1, f, fm1)
+                                               /(deltafactor*taufactor));
+        }
+    }
+
+
+    // for u^tau, use u[0]u[0] = 1 + u[i]u[i]
+    // partial^n u^tau = 1/u^tau (sum_i u^i partial^n u^i)
+    if (rk_flag == 0) {
+        for (int n = 1; n < 4; n++) {
+            f = 0.0;
+            for (int m = 1; m < 4; m++) {
+	            f += (hydro_fields->dUsup[idx][4*m+n]
+                      *hydro_fields->u_rk0[idx][m]);
+            } 
+            f /= hydro_fields->u_rk0[idx][0];
+            hydro_fields->dUsup[idx][n] = f;
+        }
+    } else {
+        for (int n = 1; n < 4; n++) {
+            f = 0.0;
+            for (int m = 1; m <= 3; m++) {
+	            f += (hydro_fields->dUsup[idx][4*m+n]
+                      *hydro_fields->u_rk1[idx][m]);
+            }
+            f /= hydro_fields->u_rk1[idx][0];
+            hydro_fields->dUsup[idx][n] = f;
+        }
+    }
+    return(1);
+}/* MakeDSpatial */
+
+int Advance::MakeDTau_1(double tau, Field *hydro_fields, int ieta, int ix, int iy,
+                             int rk_flag) {
+    int nx = GRID_SIZE_X + 1;
+    int ny = GRID_SIZE_Y + 1;
+    
+    int idx = iy + ix*ny + ieta*ny*nx;
+
+    double f;
+    /* this makes dU[m][0] = partial^tau u^m */
+    /* note the minus sign at the end because of g[0][0] = -1 */
+    if (rk_flag == 0) {
+        for (int m = 1; m < 4; m++) {
+            f = ((hydro_fields->u_rk0[idx][m] - hydro_fields->u_prev[idx][m])
+                 /DELTA_TAU);
+            hydro_fields->dUsup[idx][4*m] = -f;  // g00 = -1
+        }
+    } else {
+        for (int m = 1; m < 4; m++) {
+            f = ((hydro_fields->u_rk1[idx][m] - hydro_fields->u_rk0[idx][m])
+                 /DELTA_TAU);
+            hydro_fields->dUsup[idx][4*m] = -f;  // g00 = -1
+        }
+    }
+
+    /* I have now partial^tau u^i */
+    /* I need to calculate (u^i partial^tau u^i) = u^0 partial^tau u^0 */
+    /* u_0 d^0 u^0 + u_m d^0 u^m = 0 */
+    /* -u^0 d^0 u^0 + u_m d^0 u^m = 0 */
+    /* d^0 u^0 = u_m d^0 u^m/u^0 */
+
+    f = 0.0;
+    if (rk_flag == 0) {
+        for (int m = 1; m < 4; m++) {
+            f += hydro_fields->dUsup[idx][4*m]*hydro_fields->u_rk0[idx][m];
+        }
+        f /= hydro_fields->u_rk0[idx][0];
+        hydro_fields->dUsup[idx][0] = f;
+    } else {
+        for (int m = 1; m < 4; m++) {
+            f += hydro_fields->dUsup[idx][4*m]*hydro_fields->u_rk1[idx][m];
+        }
+        f /= hydro_fields->u_rk1[idx][0];
+        hydro_fields->dUsup[idx][0] = f;
+    }
+
+    // Here we make the time derivative of (muB/T)
+    double tildemu, tildemu_prev, rhob, eps;
+    if (rk_flag == 0) {
+        rhob = hydro_fields->rhob_rk0[idx];
+        eps = hydro_fields->e_rk0[idx];
+        tildemu = get_mu(eps, rhob)/get_temperature(eps, rhob);
+        rhob = hydro_fields->rhob_prev[idx];
+        eps = hydro_fields->e_prev[idx];
+        tildemu_prev = get_mu(eps, rhob)/get_temperature(eps, rhob);
+        f = (tildemu - tildemu_prev)/(DELTA_TAU);
+        hydro_fields->dUsup[0][16] = -f;   // g00 = -1
+    } else if (rk_flag > 0) {
+        rhob = hydro_fields->rhob_rk1[idx];
+        eps = hydro_fields->e_rk1[idx];
+        tildemu = get_mu(eps, rhob)/get_temperature(eps, rhob);
+        rhob = hydro_fields->rhob_rk0[idx];
+        eps = hydro_fields->e_rk0[idx];
+        tildemu_prev = get_mu(eps, rhob)/get_temperature(eps, rhob);
+        f = (tildemu - tildemu_prev)/(DELTA_TAU);
+        hydro_fields->dUsup[0][16] = -f;   // g00 = -1
+    }
+    return(1);
+}
+
 
 void Advance::prepare_qi_array(
         double tau, Field *hydro_fields, int rk_flag, int ieta, int ix, int iy,
@@ -428,7 +629,10 @@ int Advance::AdvanceIt(double tau, Field *hydro_fields,
                         if (rk_flag == 1) {
                             tau_rk = tau + DELTA_TAU;
                         }
-
+			
+			MakeDSpatial_1(tau, hydro_fields, ieta, ix, iy, rk_flag);
+			MakeDTau_1(tau, hydro_fields, ieta, ix, iy, rk_flag);
+ 
                         prepare_velocity_array(tau_rk, hydro_fields,
                                                ieta, ix, iy,
                                                rk_flag, SUB_GRID_SIZE_ETA, SUB_GRID_SIZE_X,
@@ -445,14 +649,25 @@ int Advance::AdvanceIt(double tau, Field *hydro_fields,
                         update_grid_cell_viscous(vis_array_new[indx], hydro_fields, rk_flag,
                                                  ieta, ix, iy, SUB_GRID_SIZE_ETA,
                                                  SUB_GRID_SIZE_X, SUB_GRID_SIZE_Y);
-                   }
+		    }
+		    if(rk_flag==0)
+		      {
+			hydro_fields->e_prev[indx] = hydro_fields->e_rk0[indx];
+			hydro_fields->rhob_prev[indx] = hydro_fields->rhob_rk0[indx];
+			for (int ii = 0; ii < 4; ii++) {
+			  hydro_fields->u_prev[indx][ii] = hydro_fields->u_rk0[indx][ii];
+			}
+			for (int ii = 0; ii < 14; ii++) {
+			  hydro_fields->Wmunu_prev[indx][ii] = hydro_fields->Wmunu_rk0[indx][ii];
+			}
+			hydro_fields->pi_b_prev[indx] = hydro_fields->pi_b_rk0[indx];
+		      }
                    }
                 }
             }
 //        }
 //        #pragma omp barrier
     //clean up
-
     return(1);
 }/* AdvanceIt */
 
@@ -492,9 +707,11 @@ int Advance::FirstRKStepT(double tau, int rk_flag,
                 rhs, qiphL, qiphR, qimhL, qimhR, grid_array_hL, grid_array_hR);
 //    // now MakeWSource returns partial_a W^{a mu}
 //    // (including geometric terms) 
-//    MakeWSource(tau_rk, qi_array, sub_grid_neta, sub_grid_x, sub_grid_y,
-//                vis_array, vis_nbr_tau, vis_nbr_x, vis_nbr_y,
-//                vis_nbr_eta, qi_array_new, DATA);
+
+
+    // MakeWSource(tau_rk, qi_array, sub_grid_neta, sub_grid_x, sub_grid_y,
+    //             vis_array, vis_nbr_tau, vis_nbr_x, vis_nbr_y,
+    //             vis_nbr_eta, qi_array_new);
     
     if (rk_flag == 1) {
         // if rk_flag == 1, we now have q0 + k1 + k2. 
@@ -560,9 +777,9 @@ int Advance::ReconstIt_velocity_Newton(
                               - grid_array_p[2]*grid_array_p[2]
                               - grid_array_p[3]*grid_array_p[3]);
     double v_guess = sqrt(1. - 1./(u0_guess*u0_guess + 1e-15));
-    //if (isnan(v_guess)) {
-    //    v_guess = 0.0;
-    //}
+    if (v_guess!=v_guess) {
+      v_guess = 0.0;
+    }
     int v_status = 1;
     int iter = 0;
     double rel_error_v = 10.0;
@@ -1606,7 +1823,7 @@ void Advance::MakeWSource(double tau, double** qi_array,
                           double** vis_array,
                           double** vis_nbr_tau, double** vis_nbr_x,
                           double** vis_nbr_y, double** vis_nbr_eta,
-                          double** qi_array_new, InitData *DATA) {
+                          double** qi_array_new) {
 //! calculate d_m (tau W^{m,alpha}) + (geom source terms)
 //! partial_tau W^tau alpha
 //! this is partial_tau evaluated at tau
@@ -1615,20 +1832,21 @@ void Advance::MakeWSource(double tau, double** qi_array,
 //!         for everywhere else. also, this change is necessary
 //!         to use Wmunu[rk_flag][4][mu] as the dissipative baryon current
 
+
     double shear_on, bulk_on;
-    if (DATA->turn_on_shear)
+    if (INCLUDE_SHEAR)
         shear_on = 1.0;
     else
         shear_on = 0.0;
 
-    if (DATA->turn_on_bulk)
+    if (INCLUDE_BULK)
         bulk_on = 1.0;
     else
         bulk_on = 0.0;
 
-    int alpha_max = 5;
-    if (DATA->turn_on_diff == 0) {
-        alpha_max = 4;
+    int alpha_max = 4;
+    if (INCLUDE_DIFF) {
+        alpha_max = 5;
     }
     for (int k = 0; k < sub_grid_neta; k++) {
         for (int i = 0; i < sub_grid_x; i++) {
@@ -1641,12 +1859,12 @@ void Advance::MakeWSource(double tau, double** qi_array,
                     double dWdtau;
                     dWdtau = ((vis_array[idx][idx_1d_alpha0]
                                - vis_nbr_tau[idx][idx_1d_alpha0])
-                              /DATA->delta_tau);
+                              /DELTA_TAU);
 
                     // bulk pressure term
                     double dPidtau = 0.0;
                     double Pi_alpha0 = 0.0;
-                    if (alpha < 4 && DATA->turn_on_bulk == 1) {
+                    if (alpha < 4 && INCLUDE_BULK) {
                         double gfac = (alpha == 0 ? -1.0 : 0.0);
                         Pi_alpha0 = (vis_array[idx][14]
                                      *(gfac + vis_array[idx][15+alpha]
@@ -1682,8 +1900,8 @@ void Advance::MakeWSource(double tau, double** qi_array,
                         idx_m_1 = 4*j + k*4*sub_grid_y + 1;
                         sgm1 = vis_nbr_x[idx_m_1][idx_1d];
                     }
-                    dWdx_perp += (sgp1 - sgm1)/(2.*DATA->delta_x);
-                    if (alpha < 4 && DATA->turn_on_bulk == 1) {
+                    dWdx_perp += (sgp1 - sgm1)/(2.*DELTA_X);
+                    if (alpha < 4 && INCLUDE_BULK) {
                         double gfac1 = (alpha == 1 ? 1.0 : 0.0);
                         if (i + 1 < sub_grid_x) {
                             bgp1 = (vis_array[idx_p_1][14]
@@ -1703,7 +1921,7 @@ void Advance::MakeWSource(double tau, double** qi_array,
                                         *(gfac1 + vis_nbr_x[idx_m_1][15+alpha]
                                                   *vis_nbr_x[idx_m_1][16]));
                         }
-                        dPidx_perp += (bgp1 - bgm1)/(2.*DATA->delta_x);
+                        dPidx_perp += (bgp1 - bgm1)/(2.*DELTA_X);
                     }
                     // y-direction
                     idx_1d = map_2d_idx_to_1d(alpha, 2);
@@ -1721,8 +1939,8 @@ void Advance::MakeWSource(double tau, double** qi_array,
                         idx_m_1 = 4*i + 4*k*sub_grid_x + 1;
                         sgm1 = vis_nbr_y[idx_m_1][idx_1d];
                     }
-                    dWdx_perp += (sgp1 - sgm1)/(2.*DATA->delta_x);
-                    if (alpha < 4 && DATA->turn_on_bulk == 1) {
+                    dWdx_perp += (sgp1 - sgm1)/(2.*DELTA_Y);
+                    if (alpha < 4 && INCLUDE_BULK) {
                         double gfac1 = (alpha == 2 ? 1.0 : 0.0);
                         if (j + 1 < sub_grid_x) {
                             bgp1 = (vis_array[idx_p_1][14]
@@ -1742,7 +1960,7 @@ void Advance::MakeWSource(double tau, double** qi_array,
                                         *(gfac1 + vis_nbr_y[idx_m_1][15+alpha]
                                                   *vis_nbr_y[idx_m_1][17]));
                         }
-                        dPidx_perp += (bgp1 - bgm1)/(2.*DATA->delta_x);
+                        dPidx_perp += (bgp1 - bgm1)/(2.*DELTA_Y);
                     }
 
                     // eta-direction
@@ -1764,8 +1982,8 @@ void Advance::MakeWSource(double tau, double** qi_array,
                         idx_m_1 = 4*j + 4*i*sub_grid_y + 1;
                         sgm1 = vis_nbr_eta[idx_m_1][idx_1d];
                     }
-                    dWdeta = (sgp1 - sgm1)/(2.*DATA->delta_eta*taufactor);
-                    if (alpha < 4 && DATA->turn_on_bulk == 1) {
+                    dWdeta = (sgp1 - sgm1)/(2.*DELTA_ETA*taufactor);
+                    if (alpha < 4 && INCLUDE_BULK) {
                         double gfac3 = (alpha == 3 ? 1.0 : 0.0);
                         if (k + 1 < sub_grid_neta) {
                             bgp1 = (vis_array[idx_p_1][14]
@@ -1786,7 +2004,7 @@ void Advance::MakeWSource(double tau, double** qi_array,
                                                  *vis_nbr_eta[idx_m_1][18]));
                         }
                         dPideta = ((bgp1 - bgm1)
-                                   /(2.*DATA->delta_eta*taufactor));
+                                   /(2.*DELTA_ETA*taufactor));
                     }
 
                     // partial_m (tau W^mn) = W^0n + tau partial_m W^mn
@@ -1814,7 +2032,7 @@ void Advance::MakeWSource(double tau, double** qi_array,
                     } else if (alpha == 4) {
                         result = sf;
                     }
-                    qi_array_new[idx][alpha] -= result*(DATA->delta_tau);
+                    qi_array_new[idx][alpha] -= result*DELTA_TAU;
                 }
             }
         }

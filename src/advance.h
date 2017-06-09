@@ -168,7 +168,7 @@ class Advance {
                      double** vis_array,
                      double** vis_nbr_tau, double** vis_nbr_x,
                      double** vis_nbr_y, double** vis_nbr_eta,
-                     double** qi_array_new, InitData* DATA);
+                     double** qi_array_new);
 
 #pragma acc routine seq
     int Make_uWRHS(double tau, int n_cell_eta, int n_cell_x, int n_cell_y,
@@ -220,6 +220,7 @@ class Advance {
     void update_grid_array_from_field(
                 Field *hydro_fields, int idx, double *grid_array, int rk_flag);
 
+
 #pragma acc routine seq
     void update_vis_array_from_field(Field *hydro_fields, int idx,
                                      double *vis_array, int rk_flag);
@@ -254,6 +255,11 @@ class Advance {
     double minmod_dx(double up1, double u, double um1);
 #pragma acc routine seq
     int map_2d_idx_to_1d(int a, int b);
+#pragma acc routine vector
+    int MakeDSpatial_1(double tau, Field *hydro_fields, int ieta, int ix, int iy, int rk_flag);
+#pragma acc routine vector
+    int MakeDTau_1(double tau, Field *hydro_fields, int ieta, int ix, int iy, int rk_flag);
+
 };
 
 #endif  // SRC_ADVANCE_H_

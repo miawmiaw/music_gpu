@@ -492,7 +492,7 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
                                     hydro_fields->pi_b_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA]) async(1)
 
 
-            #pragma acc wait(1)
+            #pragma acc wait(1,2)
             cout << "After update host" << endl;
             dat.e[oit/10] = new double[GRID_SIZE];
             dat.rhob[oit/10] = new double[GRID_SIZE];
@@ -500,7 +500,10 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
             dat.Wmunu[oit/10] = new double*[GRID_SIZE];
             dat.pi_b[oit/10] = new double[GRID_SIZE];
             cout << "Pre data move" << endl;
-            for (int x = 0; x < GRID_SIZE; ++x){
+
+            cout << hydro_fields->e_perm[0] << endl;
+
+	    for (int x = 0; x < GRID_SIZE; ++x){
                 dat.u[oit/10][x] = new double[4];
                 dat.Wmunu[oit/10][x] = new double[14];
                 dat.e[oit/10][x] = hydro_fields->e_perm[x];
@@ -690,12 +693,8 @@ void Evolve::convert_grid_to_field(Grid ***arena, Field *hydro_fields) {
     // loop over Runge-Kutta steps
     for (int rk_flag = 0; rk_flag < rk_order; rk_flag++) {
         cout << "Pre advance" << endl;
-	      // flag = u_derivative->MakedU(tau, hydro_fields, rk_flag); // put back in for viscous case
-      flag = advance->AdvanceIt(tau, hydro_fields, rk_flag, grid_array, qi_array, qi_array_new, qi_rk0, qi_nbr_x, qi_nbr_y, qi_nbr_eta, vis_array, vis_array_new, vis_nbr_tau, velocity_array, vis_nbr_x, vis_nbr_y, vis_nbr_eta, grid_array_temp, rhs, qiphL, qiphR, qimhL, qimhR, grid_array_hL, grid_array_hR);
-        cout << "After advance" << endl;
-        if (rk_flag == 0) {
-            update_prev_field(hydro_fields);
-        }
+	//	flag = u_derivative->MakedU(tau, hydro_fields, rk_flag); 
+	flag = advance->AdvanceIt(tau, hydro_fields, rk_flag, grid_array, qi_array, qi_array_new, qi_rk0, qi_nbr_x, qi_nbr_y, qi_nbr_eta, vis_array, vis_array_new, vis_nbr_tau, velocity_array, vis_nbr_x, vis_nbr_y, vis_nbr_eta, grid_array_temp, rhs, qiphL, qiphR, qimhL, qimhR, grid_array_hL, grid_array_hR); 
         cout << "After update" << endl;
     }  /* loop over rk_flag */
     cout << "AdvanceRK End" << endl;
