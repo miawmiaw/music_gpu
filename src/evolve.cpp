@@ -8,7 +8,7 @@
 #include "./advance.h"
 #include "./cornelius.h"
 #include "./field.h"
-#include "./Stopwatch.h"
+#include "sys/time.h"
 
 using namespace std;
 
@@ -185,8 +185,8 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
     DATA->delta_eta = DELTA_ETA;
     double tau;
     //int it_start = 0;
-    Stopwatch watch;
-    watch.tic();
+    struct timeval t1, t2;
+    gettimeofday( &t1, NULL );
     cout << "Pre data copy" << endl;
     #pragma acc data copyin (hydro_fields[0:1],\
                          hydro_fields->e_rk0[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA],\
@@ -207,8 +207,9 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
                          hydro_fields->pi_b_prev[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA])
     {
     cout << "Post data copy" << endl;
-    watch.toc();
-    cout << "took " << watch.takeTime() << " sec." << endl;
+    gettimeofday( &t2, NULL );
+    double tsec = (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec) / 1.0e+6;
+    cout << "used " << tsec << " sec. " << endl;
     
     for (int it = 0; it <= itmax; it++) {
         tau = tau0 + dt*it;

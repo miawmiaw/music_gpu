@@ -7,6 +7,7 @@
 #include "./eos.h"
 #include "./evolve.h"
 #include "./advance.h"
+#include "sys/time.h"
 
 using namespace std;
 
@@ -389,6 +390,8 @@ int Advance::AdvanceIt(double tau, Field *hydro_fields,
     double grid_array_hR[5];
     
 
+    struct timeval t1, t2;
+    gettimeofday( &t1, NULL );
     cout << "pre parallel" << endl;
     #pragma acc parallel loop gang worker vector collapse(3) copy(tmp[0:1]) present(hydro_fields[0:1],\
                          hydro_fields->e_rk0[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA],\
@@ -478,6 +481,9 @@ int Advance::AdvanceIt(double tau, Field *hydro_fields,
 //        }
 //        #pragma omp barrier
     //clean up
+    gettimeofday( &t2, NULL );
+    double tsec = (t2.tv_sec - t1.tv_sec) + (t2.tv_usec - t1.tv_usec) / 1.0e+6;
+    cout << "used " << tsec << " sec. " << endl;
     std::cout << "tmp=" << tmp[0] << " " << tmp[1] << " vs " << 5*pow(1./tau, 4./3.) << "\n";
     //std::cout << "tmp=" << tmp[0]  << "\n";
 

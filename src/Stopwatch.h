@@ -1,7 +1,7 @@
 #ifndef Stopwatch_header
 #define Stopwatch_header
 
-#include <ctime>
+#include "sys/time.h"
 
 class Stopwatch
 {
