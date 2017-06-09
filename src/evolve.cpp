@@ -104,240 +104,225 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
     dat.Wmunu = new double**[itmax/10+1];
     dat.pi_b = new double*[itmax/10+1];
 
-
-
     //    double tmp[2]={-1.1, -2.2};
     double ***grid_array = new double**[GRID_SIZE];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-	grid_array[idx] = new double *[1];
-	for (int idy=0; idy<1; idy++)
-	  {
-	    grid_array[idx][1] = new double[5];
-	  }
+    	grid_array[idx] = new double *[1];
+    	for (int idy=0; idy<1; idy++)
+    	  {
+    	    grid_array[idx][1] = new double[5];
+    	  }
       }
 
     double ***qi_array_new = new double**[GRID_SIZE];
-    qi_array_new = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    //    qi_array_new = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-	qi_array_new[idx] = new double *[1];
-	for (int idy=0; idy<1; idy++)
-	  {
-	    qi_array_new[idx][1] = new double[5];
-	  }
+    	qi_array_new[idx] = new double *[1];
+    	for (int idy=0; idy<1; idy++)
+    	  {
+    	    qi_array_new[idx][1] = new double[5];
+    	  }
       }
 
     double ***qi_rk0  = new double**[GRID_SIZE];
-    qi_rk0 = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    // qi_rk0 = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-	qi_rk0[idx] = new double *[1];
-	for (int idy=0; idy<1; idy++)
-	  {
-	    qi_rk0[idx][1] = new double[5];
-	  }
+    	qi_rk0[idx] = new double *[1];
+    	for (int idy=0; idy<1; idy++)
+    	  {
+    	    qi_rk0[idx][1] = new double[5];
+    	  }
       }
 
     double ***qi_array_rk0  = new double**[GRID_SIZE];
-
-    qi_array_rk0 = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    //    qi_array_rk0 = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-	qi_array_rk0[idx] = new double *[1];
-	for (int idy=0; idy<1; idy++)
-	  {
-	    qi_array_rk0[idx][1] = new double[5];
-	  }
+    	qi_array_rk0[idx] = new double *[1];
+    	for (int idy=0; idy<1; idy++)
+    	  {
+    	    qi_array_rk0[idx][1] = new double[5];
+    	  }
       }
 
     double ***qi_array  = new double**[GRID_SIZE];
-
-    qi_array = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    //    qi_array = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-	qi_array[idx] = new double *[1];
-	for (int idy=0; idy<1; idy++)
-	  {
-	    qi_array[idx][1] = new double[5];
-	  }
+    	qi_array[idx] = new double *[1];
+    	for (int idy=0; idy<1; idy++)
+    	  {
+    	    qi_array[idx][1] = new double[5];
+    	  }
       }
 
     double ***qi_nbr_x  = new double**[GRID_SIZE];
-
-    qi_nbr_x = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    //    qi_nbr_x = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-	qi_nbr_x[idx] = new double *[4];
-	for (int idy=0; idy<4; idy++)
-	  {
-	    qi_nbr_x[idx][1] = new double[5];
-	  }
+    	qi_nbr_x[idx] = new double *[4];
+    	for (int idy=0; idy<4; idy++)
+    	  {
+    	    qi_nbr_x[idx][1] = new double[5];
+    	  }
       }
 
     double ***qi_nbr_y  = new double**[GRID_SIZE];
-
-    qi_nbr_y = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    //    qi_nbr_y = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-	qi_nbr_y[idx] = new double *[4];
-	for (int idy=0; idy<4; idy++)
-	  {
-	    qi_nbr_y[idx][1] = new double[5];
-	  }
+    	qi_nbr_y[idx] = new double *[4];
+    	for (int idy=0; idy<4; idy++)
+    	  {
+    	    qi_nbr_y[idx][1] = new double[5];
+    	  }
       }
 
     double ***qi_nbr_eta  = new double**[GRID_SIZE];
-
-    qi_nbr_eta = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    //    qi_nbr_eta = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-	qi_nbr_eta[idx] = new double *[4];
-	for (int idy=0; idy<4; idy++)
-	  {
-	    qi_nbr_eta[idx][1] = new double[5];
-	  }
+    	qi_nbr_eta[idx] = new double *[4];
+    	for (int idy=0; idy<4; idy++)
+    	  {
+    	    qi_nbr_eta[idx][1] = new double[5];
+    	  }
       }
 
     double ***vis_array = new double**[GRID_SIZE];
-
-    vis_array = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    //    vis_array = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-	vis_array[idx] = new double *[1];
-	for (int idy=0; idy<1; idy++)
-	  {
-	    vis_array[idx][1] = new double[19];
-	  }
+    	vis_array[idx] = new double *[1];
+    	for (int idy=0; idy<1; idy++)
+    	  {
+    	    vis_array[idx][1] = new double[19];
+    	  }
       }
 
     double ***vis_array_new = new double**[GRID_SIZE];
-
-    vis_array_new = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    //    vis_array_new = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-	vis_array_new[idx] = new double *[1];
-	for (int idy=0; idy<1; idy++)
-	  {
-	    vis_array_new[idx][1] = new double[19];
-	  }
+    	vis_array_new[idx] = new double *[1];
+    	for (int idy=0; idy<1; idy++)
+    	  {
+    	    vis_array_new[idx][1] = new double[19];
+    	  }
       }
 
     double ***vis_nbr_tau = new double**[GRID_SIZE];
-
-    vis_nbr_tau = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    //    vis_nbr_tau = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-	vis_nbr_tau[idx] = new double *[1];
-	for (int idy=0; idy<1; idy++)
-	  {
-	    vis_nbr_tau[idx][1] = new double[19];
-	  }
+    	vis_nbr_tau[idx] = new double *[1];
+    	for (int idy=0; idy<1; idy++)
+    	  {
+    	    vis_nbr_tau[idx][1] = new double[19];
+    	  }
       }
 
     double ***velocity_array = new double**[GRID_SIZE];
-
-    velocity_array = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    //    velocity_array = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-	velocity_array[idx] = new double *[1];
-	for (int idy=0; idy<1; idy++)
-	  {
-	    velocity_array[idx][1] = new double[20];
-	  }
+    	velocity_array[idx] = new double *[1];
+    	for (int idy=0; idy<1; idy++)
+    	  {
+    	    velocity_array[idx][1] = new double[20];
+    	  }
       }
 
     double ***vis_nbr_x = new double**[GRID_SIZE];
-
-    vis_nbr_x = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    //    vis_nbr_x = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-	vis_nbr_x[idx] = new double *[4];
-	for (int idy=0; idy<4; idy++)
-	  {
-	    vis_nbr_x[idx][1] = new double[19];
-	  }
+    	vis_nbr_x[idx] = new double *[4];
+    	for (int idy=0; idy<4; idy++)
+    	  {
+    	    vis_nbr_x[idx][1] = new double[19];
+    	  }
       }
 
     double ***vis_nbr_y = new double**[GRID_SIZE];
-
-    vis_nbr_y = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    //    vis_nbr_y = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-	vis_nbr_y[idx] = new double *[4];
-	for (int idy=0; idy<4; idy++)
-	  {
-	    vis_nbr_y[idx][1] = new double[19];
-	  }
+    	vis_nbr_y[idx] = new double *[4];
+    	for (int idy=0; idy<4; idy++)
+    	  {
+    	    vis_nbr_y[idx][1] = new double[19];
+    	  }
       }
 
     double *** vis_nbr_eta = new double**[GRID_SIZE];
-
-    vis_nbr_eta = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    //    vis_nbr_eta = new double**[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-	vis_nbr_eta[idx] = new double *[4];
-	for (int idy=0; idy<4; idy++)
-	  {
-	    vis_nbr_eta[idx][1] = new double[19];
-	  }
+    	vis_nbr_eta[idx] = new double *[4];
+    	for (int idy=0; idy<4; idy++)
+    	  {
+    	    vis_nbr_eta[idx][1] = new double[19];
+    	  }
       }
 
     double **grid_array_temp = new double*[GRID_SIZE];
-
-    grid_array_temp = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    //    grid_array_temp = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-	grid_array_temp[idx] = new double [5];
+    	grid_array_temp[idx] = new double [5];
       }
 
     double **rhs = new double*[GRID_SIZE];
-    rhs = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    //rhs = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-	rhs[idx] = new double [5];
+    	rhs[idx] = new double [5];
       }
 
     double **qiphL = new double*[GRID_SIZE];
-    qiphL = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    //qiphL = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-	qiphL[idx] = new double [5];
+    	qiphL[idx] = new double [5];
       }
 
     double **qiphR = new double*[GRID_SIZE];
-    qiphR = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    //qiphR = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-	qiphR[idx] = new double [5];
+    	qiphR[idx] = new double [5];
       }
 
     double **qimhL = new double*[GRID_SIZE];
-    qimhL = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    //qimhL = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-	qiphL[idx] = new double [5];
+    	qiphL[idx] = new double [5];
       }
 
-    double **qimhR= new double*[GRID_SIZE];
-    qimhR = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    double **qimhR = new double*[GRID_SIZE];
+    //qimhR = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-	qiphR[idx] = new double [5];
+    	qiphR[idx] = new double [5];
       }
 
     double **grid_array_hL = new double*[GRID_SIZE];
-    grid_array_hL = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    //grid_array_hL = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-	grid_array_hL[idx] = new double [5];
+    	grid_array_hL[idx] = new double [5];
       }
 
     double **grid_array_hR= new double*[GRID_SIZE];
-    grid_array_hR = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
+    //grid_array_hR = new double*[(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
       {
-	grid_array_hR[idx] = new double [5];
+    	grid_array_hR[idx] = new double [5];
       }
 
     
@@ -372,31 +357,31 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
                          hydro_fields->rhob_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA], \
                          hydro_fields->u_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][0:4], \
                          hydro_fields->Wmunu_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][0:14], \
-			 hydro_fields->pi_b_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA],)
-{
+			 hydro_fields->pi_b_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA])
+    {
         cout << "Post data copy" << endl;
-        #pragma acc data create(grid_array[GRID_SIZE][1][5],\
-			 qi_array[GRID_SIZE][1][5],\
-			 qi_array_new[GRID_SIZE][1][5],\
-			 qi_rk0[GRID_SIZE][1][5],\
-			 qi_nbr_x[GRID_SIZE][4][5],\
-			 qi_nbr_y[GRID_SIZE][4][5],\
-			 qi_nbr_eta[GRID_SIZE][4][5],\
-			 vis_array[GRID_SIZE][1][19],\
-			 vis_array_new[GRID_SIZE][1][19],\
-			 vis_nbr_tau[GRID_SIZE][1][19],\
-			 velocity_array[GRID_SIZE][1][20],\
-			 vis_nbr_x[GRID_SIZE][4][19],\
-			 vis_nbr_y[GRID_SIZE][4][19],\
-			 vis_nbr_eta[GRID_SIZE][4][19],\
-			 grid_array_temp[GRID_SIZE][5],\
-			 rhs[GRID_SIZE][5],\
-			 qiphL[GRID_SIZE][5],\
-			 qiphR[GRID_SIZE][5],\
-			 qimhL[GRID_SIZE][5],\
-			 qimhR[GRID_SIZE][5],\
-			 grid_array_hL[GRID_SIZE][5],\
-			 grid_array_hR[GRID_SIZE][5])
+#pragma acc data create(grid_array[0:GRID_SIZE][0:1][0:5],\
+			qi_array[0:GRID_SIZE][0:1][0:5],\
+			qi_array_new[0:GRID_SIZE][0:1][0:5],\
+			qi_rk0[0:GRID_SIZE][0:1][0:5],\
+			qi_nbr_x[0:GRID_SIZE][0:4][0:5],\
+			qi_nbr_y[0:GRID_SIZE][0:4][0:5],\
+			qi_nbr_eta[0:GRID_SIZE][0:4][0:5],\
+			vis_array[0:GRID_SIZE][0:1][0:19],\
+			vis_array_new[0:GRID_SIZE][0:1][0:19],\
+			vis_nbr_tau[0:GRID_SIZE][0:1][0:19],\
+			velocity_array[0:GRID_SIZE][0:1][0:20],\
+			vis_nbr_x[0:GRID_SIZE][0:4][0:19],\
+			vis_nbr_y[0:GRID_SIZE][0:4][0:19],\
+			vis_nbr_eta[0:GRID_SIZE][0:4][0:19],\
+			grid_array_temp[0:GRID_SIZE][0:5],\
+			rhs[0:GRID_SIZE][0:5],\
+			qiphL[0:GRID_SIZE][0:5],\
+			qiphR[0:GRID_SIZE][0:5],\
+			qimhL[0:GRID_SIZE][0:5],\
+			qimhR[0:GRID_SIZE][0:5],\
+			grid_array_hL[0:GRID_SIZE][0:5],\
+			grid_array_hR[0:GRID_SIZE][0:5])
     {
 
         for (int oit = 0; oit <= itmax; oit += 10) {
