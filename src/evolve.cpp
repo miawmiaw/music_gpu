@@ -104,7 +104,7 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
     dat.u = new double**[itmax/10+1];
     dat.Wmunu = new double**[itmax/10+1];
     dat.pi_b = new double*[itmax/10+1];
-
+    
     //    double tmp[2]={-1.1, -2.2};
     double ***grid_array = new double**[GRID_SIZE];
     for (int idx=0; idx<(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; idx++)
@@ -360,8 +360,8 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
                          hydro_fields->Wmunu_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][0:14], \
 			 hydro_fields->pi_b_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA])
     {
-        cout << "Post data copy" << endl;
-#pragma acc data create(grid_array[0:GRID_SIZE][0:1][0:5],\
+      cout << "Post data copy 1" << endl;
+#pragma acc data create(grid_array[0:GRID_SIZE][0:1][0:5],	\
 			qi_array[0:GRID_SIZE][0:1][0:5],\
 			qi_array_new[0:GRID_SIZE][0:1][0:5],\
 			qi_rk0[0:GRID_SIZE][0:1][0:5],\
@@ -396,11 +396,11 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
                 hydro_fields->Wmunu_perm[x] = hydro_fields->Wmunu_rk0[x];
                 hydro_fields->pi_b_perm[x] = hydro_fields->pi_b_rk0[x];
             }
-//              #pragma acc update host(hydro_fields->e_rk0[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA])
-		//                for (int x = 0; x < (GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; ++x){
-//		for (int x = 0; x < 1; x++){
-//		  cout << oit << " " << hydro_fields->e_rk0[x] << endl;
-//                }
+#pragma acc update host(hydro_fields->e_rk0[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA])
+	    //      for (int x = 0; x < (GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; ++x){
+	    for (int x = 0; x < 1; x++){
+	      cout << oit << " " << hydro_fields->e_rk0[x] << endl;
+	    }
  
 //            #pragma acc parallel async(2) wait(1)
             #pragma acc wait(1)
@@ -485,11 +485,11 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
                 //if (frozen) break;
             }/* it */  
             cout << "Pre update host" << endl;
-            #pragma acc update host(hydro_fields->e_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA], \
-                                    hydro_fields->rhob_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA], \
-                                    hydro_fields->u_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][0:4], \
-                                    hydro_fields->Wmunu_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][0:14], \
-                                    hydro_fields->pi_b_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA]) async(1)
+#pragma acc update host(hydro_fields->e_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA], \
+			hydro_fields->rhob_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA], \
+			hydro_fields->u_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][0:4], \
+			hydro_fields->Wmunu_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][0:14], \
+			hydro_fields->pi_b_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA]) async(1)
 
 
             #pragma acc wait(1,2)

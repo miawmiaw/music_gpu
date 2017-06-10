@@ -578,12 +578,11 @@ int Advance::AdvanceIt(double tau, Field *hydro_fields,
     // double grid_array_hL[5];
     // double grid_array_hR[5];
     int indx;
-    #pragma acc parallel num_gangs(8) num_workers(16) vector_length(16) loop gang worker vector \
-                              collapse(3) independent private(indx) present(hydro_fields,\
-                              qi_array, qi_array_new, qi_rk0, qi_nbr_x, qi_nbr_y, qi_nbr_eta, vis_array,\
-                              vis_array_new, vis_nbr_tau, velocity_array, vis_nbr_x, vis_nbr_y, \
-                              vis_nbr_eta, grid_array_temp, rhs, qiphL, qiphR, qimhL, qimhR, \
-                              grid_array_hL, grid_array_hR, grid_array) async(2)
+#pragma acc parallel num_gangs(8) num_workers(16) vector_length(16) loop gang worker vector collapse(3) independent private(indx),\
+  present(hydro_fields, qi_array, qi_array_new, qi_rk0, qi_nbr_x, qi_nbr_y, qi_nbr_eta, vis_array,\
+	  vis_array_new, vis_nbr_tau, velocity_array, vis_nbr_x, vis_nbr_y,\
+	  vis_nbr_eta, grid_array_temp, rhs, qiphL, qiphR, qimhL, qimhR, \
+	  grid_array_hL, grid_array_hR, grid_array) async(2)
     for (int ieta = 0; ieta < GRID_SIZE_ETA; ieta += SUB_GRID_SIZE_ETA) {
 //        #pragma omp parallel private(ix)
 //        {
@@ -1007,82 +1006,82 @@ int Advance::FirstRKStepW(double tau, int rk_flag, int sub_grid_neta,
                velocity_array, vis_array_new);
 
     // add source terms
-    Make_uWSource(tau_rk, sub_grid_neta, sub_grid_x, sub_grid_y, vis_array,
-                  velocity_array, grid_array, vis_array_new);
-    if (INCLUDE_BULK == 1) {
-        Make_uPiSource(tau_rk, sub_grid_neta, sub_grid_x, sub_grid_y, vis_array,
-                       velocity_array, grid_array, vis_array_new);
-    }
+    // Make_uWSource(tau_rk, sub_grid_neta, sub_grid_x, sub_grid_y, vis_array,
+    //               velocity_array, grid_array, vis_array_new);
+    // if (INCLUDE_BULK == 1) {
+    //     Make_uPiSource(tau_rk, sub_grid_neta, sub_grid_x, sub_grid_y, vis_array,
+    //                    velocity_array, grid_array, vis_array_new);
+    // }
     
-    for (int k = 0; k < sub_grid_neta; k++) {
-        for (int i = 0; i < sub_grid_x; i++) {
-            for (int j = 0; j < sub_grid_y; j++) {
-                int idx = j + i*sub_grid_y + k*sub_grid_x*sub_grid_y;
-                if (rk_flag == 0) {
-                    for (int alpha = 0; alpha < 15; alpha++) {
-                            vis_array_new[idx][alpha] /= (
-                                                    vis_array_new[idx][15]);
-                    }
-                } else {
-                    for (int alpha = 0; alpha < 15; alpha++) {
-                            double rk0 = (vis_nbr_tau[idx][alpha]
-                                           *vis_nbr_tau[idx][15]);
-                            vis_array_new[idx][alpha] += rk0;
-                            vis_array_new[idx][alpha] *= 0.5;
-                            vis_array_new[idx][alpha] /= (
-                                                    vis_array_new[idx][15]);
-                    }
-                }
-            }
-        }
-    }
+    // for (int k = 0; k < sub_grid_neta; k++) {
+    //     for (int i = 0; i < sub_grid_x; i++) {
+    //         for (int j = 0; j < sub_grid_y; j++) {
+    //             int idx = j + i*sub_grid_y + k*sub_grid_x*sub_grid_y;
+    //             if (rk_flag == 0) {
+    //                 for (int alpha = 0; alpha < 15; alpha++) {
+    //                         vis_array_new[idx][alpha] /= (
+    //                                                 vis_array_new[idx][15]);
+    //                 }
+    //             } else {
+    //                 for (int alpha = 0; alpha < 15; alpha++) {
+    //                         double rk0 = (vis_nbr_tau[idx][alpha]
+    //                                        *vis_nbr_tau[idx][15]);
+    //                         vis_array_new[idx][alpha] += rk0;
+    //                         vis_array_new[idx][alpha] *= 0.5;
+    //                         vis_array_new[idx][alpha] /= (
+    //                                                 vis_array_new[idx][15]);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 
-    // reconstruct other components
-    double u0, u1, u2, u3;
-    for (int k = 0; k < sub_grid_neta; k++) {
-        for (int i = 0; i < sub_grid_x; i++) {
-            for (int j = 0; j < sub_grid_y; j++) {
-                int idx = j + i*sub_grid_y + k*sub_grid_x*sub_grid_y;
-                u0 = vis_array_new[idx][15];
-                u1 = vis_array_new[idx][16];
-                u2 = vis_array_new[idx][17]; 
-                u3 = vis_array_new[idx][18]; 
+    // // reconstruct other components
+    // double u0, u1, u2, u3;
+    // for (int k = 0; k < sub_grid_neta; k++) {
+    //     for (int i = 0; i < sub_grid_x; i++) {
+    //         for (int j = 0; j < sub_grid_y; j++) {
+    //             int idx = j + i*sub_grid_y + k*sub_grid_x*sub_grid_y;
+    //             u0 = vis_array_new[idx][15];
+    //             u1 = vis_array_new[idx][16];
+    //             u2 = vis_array_new[idx][17]; 
+    //             u3 = vis_array_new[idx][18]; 
 
-                // re-make Wmunu[3][3] so that Wmunu[mu][nu] is traceless
-                vis_array_new[idx][9] = (
-                        (2.*(u1*u2*vis_array_new[idx][5]
-                             + u1*u3*vis_array_new[idx][6]
-                             + u2*u3*vis_array_new[idx][8])
-                            - (u0*u0 - u1*u1)*vis_array_new[idx][4] 
-                            - (u0*u0 - u2*u2)*vis_array_new[idx][7])
-                        /(u0*u0 - u3*u3));
+    //             // re-make Wmunu[3][3] so that Wmunu[mu][nu] is traceless
+    //             vis_array_new[idx][9] = (
+    //                     (2.*(u1*u2*vis_array_new[idx][5]
+    //                          + u1*u3*vis_array_new[idx][6]
+    //                          + u2*u3*vis_array_new[idx][8])
+    //                         - (u0*u0 - u1*u1)*vis_array_new[idx][4] 
+    //                         - (u0*u0 - u2*u2)*vis_array_new[idx][7])
+    //                     /(u0*u0 - u3*u3));
 
-                // make Wmunu^0i using the transversality
-                vis_array_new[idx][1] = (vis_array_new[idx][4]*u1
-                                         + vis_array_new[idx][5]*u2
-                                         + vis_array_new[idx][6]*u3)/u0;
-                vis_array_new[idx][2] = (vis_array_new[idx][5]*u1
-                                         + vis_array_new[idx][7]*u2
-                                         + vis_array_new[idx][8]*u3)/u0;
-                vis_array_new[idx][3] = (vis_array_new[idx][6]*u1
-                                         + vis_array_new[idx][8]*u2
-                                         + vis_array_new[idx][9]*u3)/u0;
+    //             // make Wmunu^0i using the transversality
+    //             vis_array_new[idx][1] = (vis_array_new[idx][4]*u1
+    //                                      + vis_array_new[idx][5]*u2
+    //                                      + vis_array_new[idx][6]*u3)/u0;
+    //             vis_array_new[idx][2] = (vis_array_new[idx][5]*u1
+    //                                      + vis_array_new[idx][7]*u2
+    //                                      + vis_array_new[idx][8]*u3)/u0;
+    //             vis_array_new[idx][3] = (vis_array_new[idx][6]*u1
+    //                                      + vis_array_new[idx][8]*u2
+    //                                      + vis_array_new[idx][9]*u3)/u0;
 
-                // make Wmunu^00
-                vis_array_new[idx][0] = (vis_array_new[idx][1]*u1
-                                         + vis_array_new[idx][2]*u2
-                                         + vis_array_new[idx][3]*u3)/u0;
+    //             // make Wmunu^00
+    //             vis_array_new[idx][0] = (vis_array_new[idx][1]*u1
+    //                                      + vis_array_new[idx][2]*u2
+    //                                      + vis_array_new[idx][3]*u3)/u0;
 
-                    vis_array_new[idx][10] = 0.0;
+    //                 vis_array_new[idx][10] = 0.0;
 
-                // If the energy density of the fluid element is smaller
-                // than 0.01GeV reduce Wmunu using the QuestRevert algorithm
-                if (INITIAL_PROFILE >2) {
-                    QuestRevert(tau, vis_array_new[idx], grid_array[idx]);
-                }
-            }
-        }
-    }
+    //             // If the energy density of the fluid element is smaller
+    //             // than 0.01GeV reduce Wmunu using the QuestRevert algorithm
+    //             if (INITIAL_PROFILE >2) {
+    //                 QuestRevert(tau, vis_array_new[idx], grid_array[idx]);
+    //             }
+    //         }
+    //     }
+    // }
 
     return(1);
 }
@@ -2045,7 +2044,7 @@ int Advance::Make_uWRHS(double tau, int sub_grid_neta, int sub_grid_x, int sub_g
                         double** velocity_array,
                         double** vis_array_new) {
 
-    if (DATA_ptr->turn_on_shear == 0)
+    if (VISCOUS_FLAG == 0)
         return(1);
 
     for (int k = 0; k < sub_grid_neta; k++) {
@@ -2169,7 +2168,7 @@ int Advance::Make_uWRHS(double tau, int sub_grid_neta, int sub_grid_x, int sub_g
                     HWph = ((uWphR + uWphL) - ax*(WphR - WphL))*0.5;
                     ax = maxi(a, am1);
                     HWmh = ((uWmhR + uWmhL) - ax*(WmhR - WmhL))*0.5;
-                    HW = (HWph - HWmh)/DATA_ptr->delta_x/taufactor;
+                    HW = (HWph - HWmh)/DELTA_X/taufactor;
                         
                     // make partial_i (u^i Wmn)
                     sum += -HW;
@@ -2252,7 +2251,7 @@ int Advance::Make_uWRHS(double tau, int sub_grid_neta, int sub_grid_x, int sub_g
                     HWph = ((uWphR + uWphL) - ax*(WphR - WphL))*0.5;
                     ax = maxi(a, am1);
                     HWmh = ((uWmhR + uWmhL) - ax*(WmhR - WmhL))*0.5;
-                    HW = (HWph - HWmh)/DATA_ptr->delta_y/taufactor;
+                    HW = (HWph - HWmh)/DELTA_Y/taufactor;
                     // make partial_i (u^i Wmn)
                     sum += -HW;
             
@@ -2334,7 +2333,7 @@ int Advance::Make_uWRHS(double tau, int sub_grid_neta, int sub_grid_x, int sub_g
                     HWph = ((uWphR + uWphL) - ax*(WphR - WphL))*0.5;
                     ax = maxi(a, am1);
                     HWmh = ((uWmhR + uWmhL) - ax*(WmhR - WmhL))*0.5;
-                    HW = (HWph - HWmh)/DATA_ptr->delta_eta/taufactor;
+                    HW = (HWph - HWmh)/DELTA_ETA/taufactor;
                     // make partial_i (u^i Wmn)
                     sum += -HW;
                     
@@ -2535,7 +2534,7 @@ double Advance::Make_uWSource(double tau, int sub_grid_neta, int sub_grid_x,
                 double T = get_temperature(epsilon, rhob);
 
                 double shear_to_s = 0.0;
-                    shear_to_s = DATA_ptr->shear_to_s;
+                    shear_to_s = SHEAR_TO_S;
 
 
                 //  Defining transport coefficients  

@@ -4,10 +4,10 @@
 
 #define SMALL (1.0e-16)
 
-#define GRID_SIZE_X 200
-#define GRID_SIZE_Y 200
+#define GRID_SIZE_X 20
+#define GRID_SIZE_Y 20
 #define GRID_SIZE_ETA 8
-#define GRID_SIZE 323208
+#define GRID_SIZE 3528
 #define SUB_GRID_SIZE_X 1
 #define SUB_GRID_SIZE_Y 1
 #define SUB_GRID_SIZE_ETA 1
@@ -17,8 +17,8 @@
 #define DELTA_Y 0.01
 #define DELTA_ETA 0.01
 
-#define VISCOUS_FLAG 0
-#define INCLUDE_SHEAR 0
+#define VISCOUS_FLAG 1
+#define INCLUDE_SHEAR 1
 #define SHEAR_TO_S 0.20
 #define INCLUDE_BULK 0
 #define INCLUDE_DIFF 0
