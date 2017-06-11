@@ -42,8 +42,8 @@ Advance::~Advance() {
 //}
 
 
-int Advance::MakeDSpatial_1(double tau, Field *hydro_fields, int ieta, int ix, int iy,
-                                 int rk_flag) {
+int Advance::MakeDSpatial_1(double tau, Field *hydro_fields,
+                            int ieta, int ix, int iy, int rk_flag) {
     int nx = GRID_SIZE_X + 1;
     int ny = GRID_SIZE_Y + 1;
     int neta = GRID_SIZE_ETA;
@@ -164,10 +164,10 @@ int Advance::MakeDSpatial_1(double tau, Field *hydro_fields, int ieta, int ix, i
         }
     }
     return(1);
-}/* MakeDSpatial */
+}
 
-int Advance::MakeDTau_1(double tau, Field *hydro_fields, int ieta, int ix, int iy,
-                             int rk_flag) {
+int Advance::MakeDTau_1(double tau, Field *hydro_fields,
+                        int ieta, int ix, int iy, int rk_flag) {
     int nx = GRID_SIZE_X + 1;
     int ny = GRID_SIZE_Y + 1;
     

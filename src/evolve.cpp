@@ -501,6 +501,24 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
             dat.pi_b[oit/10] = new double[GRID_SIZE];
             cout << "Pre data move" << endl;
 
+            if (DATA->Initial_profile == 0) {
+                if (fabs(tau - 1.0) < 1e-8) {
+                    grid_info->Gubser_flow_check_file(hydro_fields, tau);
+                }
+                if (fabs(tau - 1.2) < 1e-8) {
+                    grid_info->Gubser_flow_check_file(hydro_fields, tau);
+                }
+                if (fabs(tau - 1.5) < 1e-8) {
+                    grid_info->Gubser_flow_check_file(hydro_fields, tau);
+                }
+                if (fabs(tau - 2.0) < 1e-8) {
+                    grid_info->Gubser_flow_check_file(hydro_fields, tau);
+                }
+                if (fabs(tau - 3.0) < 1e-8) {
+                    grid_info->Gubser_flow_check_file(hydro_fields, tau);
+                }
+            }
+
             cout << hydro_fields->e_perm[0] << endl;
 
 	    for (int x = 0; x < GRID_SIZE; ++x){
