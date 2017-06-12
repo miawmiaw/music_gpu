@@ -89,13 +89,13 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
 {
 
     // main loop starts ...
-    int itmax = DATA->nt;
-    double tau0 = DATA->tau0;
-    double dt = DATA->delta_tau;
     DATA->delta_tau = DELTA_TAU;
     DATA->delta_x = DELTA_X;
     DATA->delta_y = DELTA_Y;
     DATA->delta_eta = DELTA_ETA;
+    int itmax = DATA->nt;
+    double tau0 = DATA->tau0;
+    double dt = DATA->delta_tau;
     double tau;
     DataDump dat;
     
@@ -386,25 +386,30 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
     {
         cout << "Post data copy 2" << endl;
 
-        for (int oit = 0; oit <= itmax; oit += 10) {
+        for (int oit = 0; oit <= itmax; oit += 21) {
              
             #pragma acc parallel loop gang worker vector async(1)
             for (int x = 0; x < (GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; ++x){
                 hydro_fields->e_perm[x] = hydro_fields->e_rk0[x];
                 hydro_fields->rhob_perm[x] = hydro_fields->rhob_rk0[x];
-                hydro_fields->u_perm[x] = hydro_fields->u_rk0[x];
-                hydro_fields->Wmunu_perm[x] = hydro_fields->Wmunu_rk0[x];
+                for (int ii = 0; ii < 4; ii++) {
+                    hydro_fields->u_perm[x][ii] = hydro_fields->u_rk0[x][ii];
+                }
+                for (int ii = 0; ii < 14; ii++) {
+                    hydro_fields->Wmunu_perm[x][ii] = (
+                                            hydro_fields->Wmunu_rk0[x][ii]);
+                }
                 hydro_fields->pi_b_perm[x] = hydro_fields->pi_b_rk0[x];
             }
-#pragma acc update host(hydro_fields->e_rk0[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA])
+//#pragma acc update host(hydro_fields->e_rk0[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA])
 	    //      for (int x = 0; x < (GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA; ++x){
-	    for (int x = 0; x < 1; x++){
-	      cout << oit << " " << hydro_fields->e_rk0[x] << endl;
-	    }
+	    //for (int x = 0; x < 1; x++){
+	    //  cout << oit << " " << hydro_fields->e_rk0[x] << endl;
+	    //}
  
 //            #pragma acc parallel async(2) wait(1)
             #pragma acc wait(1)
-            for (int it = oit; it < oit + 10; ++it){
+            for (int it = oit; it < oit + 21; ++it){
                 tau = tau0 + dt*it;
                 // store initial conditions
                 //if (it == it_start) {
@@ -412,25 +417,6 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
                 //}
 
                 //convert_grid_to_field(arena, hydro_fields);
-/* 
-                if (DATA->Initial_profile == 0) {
-                    if (fabs(tau - 1.0) < 1e-8) {
-                        grid_info->Gubser_flow_check_file(hydro_fields, tau);
-                    }
-                    if (fabs(tau - 1.2) < 1e-8) {
-                        grid_info->Gubser_flow_check_file(hydro_fields, tau);
-                    }
-                    if (fabs(tau - 1.5) < 1e-8) {
-                        grid_info->Gubser_flow_check_file(hydro_fields, tau);
-                    }
-                    if (fabs(tau - 2.0) < 1e-8) {
-                        grid_info->Gubser_flow_check_file(hydro_fields, tau);
-                    }
-                    if (fabs(tau - 3.0) < 1e-8) {
-                        grid_info->Gubser_flow_check_file(hydro_fields, tau);
-                    }
-                }
-*/
                 //if (it % Nskip_timestep == 0) {
                 //    if (outputEvo_flag == 1) {
                 //        grid_info->OutputEvolutionDataXYEta(arena, DATA, tau);
@@ -483,6 +469,8 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
                 //fprintf(stdout, "Done time step %d/%d. tau = %6.3f fm/c \n", 
                 //        it, itmax, tau);
                 //if (frozen) break;
+            cout << tau << endl;
+
             }/* it */  
             cout << "Pre update host" << endl;
 #pragma acc update host(hydro_fields->e_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA], \
@@ -491,16 +479,8 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
 			hydro_fields->Wmunu_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA][0:14], \
 			hydro_fields->pi_b_perm[0:(GRID_SIZE_X + 1)*(GRID_SIZE_Y + 1)*GRID_SIZE_ETA]) async(1)
 
-
             #pragma acc wait(1,2)
             cout << "After update host" << endl;
-            dat.e[oit/10] = new double[GRID_SIZE];
-            dat.rhob[oit/10] = new double[GRID_SIZE];
-            dat.u[oit/10] = new double*[GRID_SIZE];
-            dat.Wmunu[oit/10] = new double*[GRID_SIZE];
-            dat.pi_b[oit/10] = new double[GRID_SIZE];
-            cout << "Pre data move" << endl;
-
             if (DATA->Initial_profile == 0) {
                 if (fabs(tau - 1.0) < 1e-8) {
                     grid_info->Gubser_flow_check_file(hydro_fields, tau);
@@ -518,6 +498,14 @@ int Evolve::EvolveIt(InitData *DATA, Field *hydro_fields) {
                     grid_info->Gubser_flow_check_file(hydro_fields, tau);
                 }
             }
+
+
+            dat.e[oit/10] = new double[GRID_SIZE];
+            dat.rhob[oit/10] = new double[GRID_SIZE];
+            dat.u[oit/10] = new double*[GRID_SIZE];
+            dat.Wmunu[oit/10] = new double*[GRID_SIZE];
+            dat.pi_b[oit/10] = new double[GRID_SIZE];
+            cout << "Pre data move" << endl;
 
             cout << hydro_fields->e_perm[0] << endl;
 
